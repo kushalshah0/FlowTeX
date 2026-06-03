@@ -25,39 +25,49 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   const docRef = useRef<PDFDocumentProxy | null>(null)
   const pdfDataRef = useRef<ArrayBuffer | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const renderCancelled = useRef(false)
 
-  const renderPages = useCallback(async () => {
-    const doc = docRef.current
-    if (!doc || renderCancelled.current) return
+  useEffect(() => {
+    if (!docRef.current) return
+    let cancelled = false
 
-    const container = containerRef.current
-    if (!container) return
+    const run = async () => {
+      const doc = docRef.current
+      if (!doc || cancelled) return
+      const container = containerRef.current
+      if (!container) return
 
-    container.innerHTML = ""
-    const count = Math.min(doc.numPages, 100)
+      container.innerHTML = ""
+      const count = Math.min(doc.numPages, 100)
 
-    for (let i = 1; i <= count; i++) {
-      if (renderCancelled.current) break
+      for (let i = 1; i <= count; i++) {
+        if (cancelled) break
 
-      const page = await doc.getPage(i)
-      const viewport = page.getViewport({ scale })
+        try {
+          const page = await doc.getPage(i)
+          const viewport = page.getViewport({ scale })
 
-      const canvas = document.createElement("canvas")
-      canvas.width = viewport.width
-      canvas.height = viewport.height
-      canvas.className = "mx-auto mb-2 rounded-sm shadow-lg"
+          const canvas = document.createElement("canvas")
+          canvas.width = viewport.width
+          canvas.height = viewport.height
+          canvas.className = "mx-auto mb-2 rounded-sm shadow-lg"
 
-      container.appendChild(canvas)
+          container.appendChild(canvas)
 
-      await page.render({
-        canvas,
-        canvasContext: canvas.getContext("2d")!,
-        viewport,
-      }).promise
+          await page.render({
+            canvas,
+            canvasContext: canvas.getContext("2d")!,
+            viewport,
+          }).promise
+        } catch {
+          break
+        }
+      }
+
+      if (!cancelled) setCurrentPage(1)
     }
 
-    setCurrentPage(1)
+    run()
+    return () => { cancelled = true }
   }, [scale])
 
   const loadPdf = useCallback(async (data: ArrayBuffer) => {
@@ -67,28 +77,25 @@ export function PdfPreview({ files }: PdfPreviewProps) {
     }
     docRef.current = null
     pdfDataRef.current = null
-    renderCancelled.current = false
 
     try {
       const loadingTask = pdfjs.getDocument({ data })
       loadingTaskRef.current = loadingTask
       const doc = await loadingTask.promise
-      if (renderCancelled.current) return
 
       docRef.current = doc
       pdfDataRef.current = data
       setNumPages(doc.numPages)
-      await renderPages()
     } catch {
-      setLogs((prev) => [...prev, "Failed to render PDF"])
+      setLogs((prev) => [...prev, "Failed to load PDF"])
     }
-  }, [renderPages])
+  }, [])
 
   useEffect(() => {
-    if (docRef.current) {
-      renderPages()
+    if (docRef.current && containerRef.current) {
+      containerRef.current.innerHTML = ""
     }
-  }, [renderPages])
+  }, [numPages])
 
   const handleCompile = useCallback(async (e: CustomEvent) => {
     const { content } = e.detail
@@ -96,7 +103,6 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
     compilingRef.current = true
     setCompiling(true)
-    renderCancelled.current = true
     setNumPages(0)
     if (containerRef.current) containerRef.current.innerHTML = ""
     const ts = Date.now()
@@ -128,7 +134,6 @@ export function PdfPreview({ files }: PdfPreviewProps) {
     window.addEventListener("compile-latex", handleCompile as unknown as EventListener)
     return () => {
       window.removeEventListener("compile-latex", handleCompile as unknown as EventListener)
-      renderCancelled.current = true
       if (loadingTaskRef.current) loadingTaskRef.current.destroy()
     }
   }, [handleCompile])
