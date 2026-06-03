@@ -5,7 +5,7 @@ import * as pdfjs from "pdfjs-dist"
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist"
 import { compileLatex } from "@/lib/compile"
 import { Button } from "@/components/ui/button"
-import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Download } from "lucide-react"
+import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ChevronDown, Download, Play, Terminal } from "lucide-react"
 import type { ProjectFile } from "@/types"
 
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
@@ -23,6 +23,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   const [zoomValue, setZoomValue] = useState("100")
   const zoomInputRef = useRef<HTMLInputElement>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [logOpen, setLogOpen] = useState(false)
   const compilingRef = useRef(false)
   const loadingTaskRef = useRef<PDFDocumentLoadingTask | null>(null)
   const docRef = useRef<PDFDocumentProxy | null>(null)
@@ -39,8 +40,8 @@ export function PdfPreview({ files }: PdfPreviewProps) {
       const container = containerRef.current
       if (!container) return
 
-      container.innerHTML = ""
       const count = Math.min(doc.numPages, 100)
+      const bufs: HTMLCanvasElement[] = []
 
       for (let i = 1; i <= count; i++) {
         if (cancelled) break
@@ -53,8 +54,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           canvas.width = viewport.width
           canvas.height = viewport.height
           canvas.className = "mx-auto mb-2 rounded-sm shadow-lg"
-
-          container.appendChild(canvas)
+          bufs.push(canvas)
 
           await page.render({
             canvas,
@@ -66,7 +66,11 @@ export function PdfPreview({ files }: PdfPreviewProps) {
         }
       }
 
-      if (!cancelled) setCurrentPage(1)
+      if (!cancelled && bufs.length > 0) {
+        container.innerHTML = ""
+        for (const c of bufs) container.appendChild(c)
+        setCurrentPage(1)
+      }
     }
 
     run()
@@ -102,8 +106,6 @@ export function PdfPreview({ files }: PdfPreviewProps) {
     setCompiling(true)
     setNumPages(0)
     if (containerRef.current) containerRef.current.innerHTML = ""
-    const ts = Date.now()
-    setLogs((prev) => [...prev, "Compiling..."])
 
     try {
       const result = await compileLatex(files, content)
@@ -112,15 +114,13 @@ export function PdfPreview({ files }: PdfPreviewProps) {
         await loadPdf(result.pdf)
       }
 
-      const elapsed = ((Date.now() - ts) / 1000).toFixed(1)
-      setLogs((prev) => [
-        ...prev,
-        ...result.log.split("\n").filter(Boolean).slice(-5),
-        `Done in ${elapsed}s`,
-      ])
+      if (result.log && !result.log.includes("Compilation succeeded")) {
+        const lines = result.log.split("\n").filter(Boolean)
+        setLogs((prev) => [...prev, ...lines])
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Compilation failed"
-      setLogs((prev) => [...prev, `Error: ${message}`])
+      setLogs((prev) => [...prev, message])
     }
 
     compilingRef.current = false
@@ -128,9 +128,18 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   }, [files, loadPdf])
 
   useEffect(() => {
+    if (logs.some((l) => /error|failed/i.test(l))) {
+      setLogOpen(true)
+    }
+  }, [logs])
+
+  useEffect(() => {
+    const toggleLogs = () => setLogOpen((o) => !o)
     window.addEventListener("compile-latex", handleCompile as unknown as EventListener)
+    window.addEventListener("toggle-logs", toggleLogs)
     return () => {
       window.removeEventListener("compile-latex", handleCompile as unknown as EventListener)
+      window.removeEventListener("toggle-logs", toggleLogs)
       if (loadingTaskRef.current) loadingTaskRef.current.destroy()
     }
   }, [handleCompile])
@@ -174,9 +183,31 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
   return (
     <div className="relative flex h-full flex-col bg-muted/10">
-      {hasPdf && (
-        <div className="flex items-center gap-1 border-b px-2 py-1 text-xs">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut}>
+      <div className="flex items-center gap-1.5 border-b px-3 py-1 text-xs">
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => window.dispatchEvent(new CustomEvent("request-compile"))}
+            disabled={compiling}
+            title="Compile (Cmd+Enter)"
+          >
+            <Play className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setLogOpen((o) => !o)}
+            title="Toggle logs"
+          >
+            <Terminal className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+
+        <div className="ml-auto flex items-center gap-0.5">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut} disabled={!hasPdf}>
             <ZoomOut className="h-3.5 w-3.5" />
           </Button>
           <input
@@ -203,24 +234,24 @@ export function PdfPreview({ files }: PdfPreviewProps) {
                 e.currentTarget.blur()
               }
             }}
-            className={`h-6 w-[48px] rounded px-1.5 text-center tabular-nums text-xs outline-hidden ${
+            className={`h-7 w-[48px] rounded px-1.5 text-center tabular-nums text-xs outline-hidden ${
               editingZoom
                 ? "border bg-background ring-1 ring-ring"
                 : "border-none bg-transparent hover:bg-accent cursor-pointer"
             }`}
           />
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn} disabled={!hasPdf}>
             <ZoomIn className="h-3.5 w-3.5" />
           </Button>
 
-          <div className="mx-2 h-4 w-px bg-border" />
+          <div className="mx-1.5 h-4 w-px bg-border" />
 
           <Button
             variant="ghost"
             size="icon"
             className="h-7 w-7"
             onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage <= 1}
+            disabled={!hasPdf || currentPage <= 1}
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </Button>
@@ -232,18 +263,16 @@ export function PdfPreview({ files }: PdfPreviewProps) {
             size="icon"
             className="h-7 w-7"
             onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage >= numPages}
+            disabled={!hasPdf || currentPage >= numPages}
           >
             <ChevronRight className="h-3.5 w-3.5" />
           </Button>
 
-          <div className="ml-auto">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownload}>
-              <Download className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownload} disabled={!hasPdf}>
+            <Download className="h-3.5 w-3.5" />
+          </Button>
         </div>
-      )}
+      </div>
       <div className="flex-1 overflow-y-auto" ref={containerRef} />
       {!hasPdf && !compiling && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -256,12 +285,38 @@ export function PdfPreview({ files }: PdfPreviewProps) {
         </div>
       )}
       {logs.length > 0 && (
-        <div className="max-h-32 shrink-0 overflow-y-auto border-t bg-background p-2">
-          {logs.map((log, i) => (
-            <p key={i} className="font-mono text-xs text-muted-foreground">
-              {log}
-            </p>
-          ))}
+        <div className="shrink-0 border-t bg-background">
+          <div className="flex items-center justify-between px-2 py-1">
+            <button
+              onClick={() => setLogOpen(!logOpen)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {logOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              Logs ({logs.length})
+            </button>
+            <button
+              onClick={() => { setLogs([]); setLogOpen(false) }}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          </div>
+          {logOpen && (
+            <div className="max-h-40 overflow-y-auto border-t p-2">
+              {logs.map((log, i) => (
+                <p
+                  key={i}
+                  className={`font-mono text-xs leading-relaxed ${
+                    /error|failed/i.test(log)
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {log}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

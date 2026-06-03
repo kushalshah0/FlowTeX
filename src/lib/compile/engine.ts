@@ -19,7 +19,10 @@ export async function compileLatex(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Compilation failed" }))
-    return { pdf: null, log: err.error ?? "Compilation failed" }
+    const log = err.log
+      ? (Array.isArray(err.log) ? err.log.join("\n") : err.log)
+      : (err.error ?? "Compilation failed")
+    return { pdf: null, log }
   }
 
   const pdf = await res.arrayBuffer()
