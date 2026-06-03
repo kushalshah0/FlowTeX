@@ -20,7 +20,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   const [numPages, setNumPages] = useState(0)
   const [scale, setScale] = useState(1)
   const [editingZoom, setEditingZoom] = useState(false)
-  const [zoomInput, setZoomInput] = useState("100")
+  const [zoomValue, setZoomValue] = useState("100")
   const zoomInputRef = useRef<HTMLInputElement>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const compilingRef = useRef(false)
@@ -139,25 +139,13 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   const zoomOut = () => setScale((s) => Math.max(s - 0.2, 0.4))
   const zoomReset = () => setScale(1)
 
-  const startZoomEdit = () => {
-    setZoomInput(Math.round(scale * 100).toString())
-    setEditingZoom(true)
-  }
-
   const commitZoom = () => {
     setEditingZoom(false)
-    const pct = parseInt(zoomInput, 10)
+    const pct = parseInt(zoomValue, 10)
     if (!isNaN(pct) && pct >= 10 && pct <= 400) {
       setScale(pct / 100)
     }
   }
-
-  useEffect(() => {
-    if (editingZoom && zoomInputRef.current) {
-      zoomInputRef.current.focus()
-      zoomInputRef.current.select()
-    }
-  }, [editingZoom])
 
   const goToPage = (num: number) => {
     const target = Math.max(1, Math.min(num, numPages))
@@ -189,25 +177,36 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut}>
             <ZoomOut className="h-3.5 w-3.5" />
           </Button>
-          {editingZoom ? (
-            <input
-              ref={zoomInputRef}
-              type="text"
-              value={zoomInput}
-              onChange={(e) => setZoomInput(e.target.value.replace(/\D/g, "").slice(0, 3))}
-              onBlur={commitZoom}
-              onKeyDown={(e) => { if (e.key === "Enter") commitZoom(); if (e.key === "Escape") setEditingZoom(false) }}
-              className="h-6 w-[48px] rounded border bg-background px-1.5 text-center tabular-nums text-xs outline-hidden ring-1 ring-ring"
-            />
-          ) : (
-            <button
-              onClick={startZoomEdit}
-              className="min-w-[48px] rounded px-1.5 py-0.5 text-center tabular-nums hover:bg-accent"
-              title="Click to edit zoom"
-            >
-              {Math.round(scale * 100)}%
-            </button>
-          )}
+          <input
+            ref={zoomInputRef}
+            type="text"
+            value={editingZoom ? zoomValue : `${Math.round(scale * 100)}%`}
+            readOnly={!editingZoom}
+            onFocus={() => {
+              if (!editingZoom) {
+                setZoomValue(Math.round(scale * 100).toString())
+                setEditingZoom(true)
+              }
+            }}
+            onChange={(e) => setZoomValue(e.target.value.replace(/\D/g, "").slice(0, 3))}
+            onBlur={commitZoom}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                commitZoom()
+                e.currentTarget.blur()
+              }
+              if (e.key === "Escape") {
+                setEditingZoom(false)
+                setZoomValue(Math.round(scale * 100).toString())
+                e.currentTarget.blur()
+              }
+            }}
+            className={`h-6 w-[48px] rounded px-1.5 text-center tabular-nums text-xs outline-hidden ${
+              editingZoom
+                ? "border bg-background ring-1 ring-ring"
+                : "border-none bg-transparent hover:bg-accent cursor-pointer"
+            }`}
+          />
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn}>
             <ZoomIn className="h-3.5 w-3.5" />
           </Button>
