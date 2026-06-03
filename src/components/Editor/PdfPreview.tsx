@@ -68,7 +68,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
     run()
     return () => { cancelled = true }
-  }, [scale])
+  }, [scale, numPages])
 
   const loadPdf = useCallback(async (data: ArrayBuffer) => {
     if (loadingTaskRef.current) {
@@ -90,12 +90,6 @@ export function PdfPreview({ files }: PdfPreviewProps) {
       setLogs((prev) => [...prev, "Failed to load PDF"])
     }
   }, [])
-
-  useEffect(() => {
-    if (docRef.current && containerRef.current) {
-      containerRef.current.innerHTML = ""
-    }
-  }, [numPages])
 
   const handleCompile = useCallback(async (e: CustomEvent) => {
     const { content } = e.detail
