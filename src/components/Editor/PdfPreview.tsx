@@ -161,7 +161,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   const hasPdf = numPages > 0
 
   return (
-    <div className="flex h-full flex-col bg-muted/10">
+    <div className="relative flex h-full flex-col bg-muted/10">
       {hasPdf && (
         <div className="flex items-center gap-1 border-b px-2 py-1 text-xs">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut}>
@@ -208,20 +208,19 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           </div>
         </div>
       )}
-      <div className="flex-1 overflow-y-auto p-2" ref={containerRef}>
-        {!hasPdf && (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">No preview yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Compile your LaTeX to see the PDF (Cmd/Ctrl + Enter)
-              </p>
-            </div>
+      <div className="flex-1 overflow-y-auto" ref={containerRef} />
+      {!hasPdf && !compiling && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">No preview yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Compile your LaTeX to see the PDF (Cmd/Ctrl + Enter)
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       {logs.length > 0 && (
-        <div className="max-h-32 overflow-y-auto border-t bg-background p-2">
+        <div className="max-h-32 shrink-0 overflow-y-auto border-t bg-background p-2">
           {logs.map((log, i) => (
             <p key={i} className="font-mono text-xs text-muted-foreground">
               {log}
