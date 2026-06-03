@@ -12,53 +12,75 @@ interface PdfPreviewProps {
   files: ProjectFile[]
 }
 
+interface PageInfo {
+  num: number
+  width: number
+  height: number
+}
+
 export function PdfPreview({ files }: PdfPreviewProps) {
   const [logs, setLogs] = useState<string[]>([])
   const [compiling, setCompiling] = useState(false)
-  const [hasPdf, setHasPdf] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [pages, setPages] = useState<PageInfo[]>([])
   const compilingRef = useRef(false)
   const loadingTaskRef = useRef<PDFDocumentLoadingTask | null>(null)
+  const renderCancelled = useRef(false)
+  const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map())
+  const drawQueue = useRef<Map<number, (canvas: HTMLCanvasElement) => Promise<void>>>(new Map())
 
   const renderPdf = useCallback(async (data: ArrayBuffer) => {
     if (loadingTaskRef.current) {
       loadingTaskRef.current.destroy()
       loadingTaskRef.current = null
     }
-    if (containerRef.current) {
-      containerRef.current.innerHTML = ""
-    }
+
+    renderCancelled.current = false
+    drawQueue.current.clear()
+    canvasRefs.current.clear()
 
     try {
       const loadingTask = pdfjs.getDocument({ data })
       loadingTaskRef.current = loadingTask
       const doc = await loadingTask.promise
-      setHasPdf(true)
+      if (renderCancelled.current) return
 
       const scale = window.devicePixelRatio > 1 ? 1.5 : 1.8
-      const pages = Math.min(doc.numPages, 100)
+      const count = Math.min(doc.numPages, 100)
+      const pageInfos: PageInfo[] = []
 
-      for (let i = 1; i <= pages; i++) {
+      for (let i = 1; i <= count; i++) {
         const page = await doc.getPage(i)
+        if (renderCancelled.current) break
+
         const viewport = page.getViewport({ scale })
+        pageInfos.push({ num: i, width: viewport.width, height: viewport.height })
 
-        const canvas = document.createElement("canvas")
-        canvas.width = viewport.width
-        canvas.height = viewport.height
-        canvas.className = "mx-auto mb-2 rounded-sm shadow-lg"
+        drawQueue.current.set(i, async (canvas: HTMLCanvasElement) => {
+          canvas.width = viewport.width
+          canvas.height = viewport.height
+          await page.render({
+            canvas,
+            canvasContext: canvas.getContext("2d")!,
+            viewport,
+          }).promise
+        })
+      }
 
-        containerRef.current?.appendChild(canvas)
-
-        await page.render({
-          canvas,
-          canvasContext: canvas.getContext("2d")!,
-          viewport,
-        }).promise
+      if (!renderCancelled.current) {
+        setPages(pageInfos)
       }
     } catch {
       setLogs((prev) => [...prev, "Failed to render PDF"])
     }
   }, [])
+
+  useEffect(() => {
+    const queue = drawQueue.current
+    for (const [num, draw] of queue) {
+      const canvas = canvasRefs.current.get(num)
+      if (canvas) draw(canvas)
+    }
+  }, [pages])
 
   const handleCompile = useCallback(async (e: CustomEvent) => {
     const { content } = e.detail
@@ -66,6 +88,8 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
     compilingRef.current = true
     setCompiling(true)
+    renderCancelled.current = true
+    setPages([])
     const ts = Date.now()
     setLogs((prev) => [...prev, "Compiling..."])
 
@@ -95,6 +119,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
     window.addEventListener("compile-latex", handleCompile as unknown as EventListener)
     return () => {
       window.removeEventListener("compile-latex", handleCompile as unknown as EventListener)
+      renderCancelled.current = true
       if (loadingTaskRef.current) loadingTaskRef.current.destroy()
     }
   }, [handleCompile])
@@ -109,8 +134,21 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           </span>
         )}
       </div>
-      <div className="flex-1 overflow-y-auto" ref={containerRef}>
-        {!hasPdf && (
+      <div className="flex-1 overflow-y-auto p-2">
+        {pages.length > 0 ? (
+          pages.map((p) => (
+            <canvas
+              key={p.num}
+              ref={(el) => {
+                if (el) canvasRefs.current.set(p.num, el)
+                else canvasRefs.current.delete(p.num)
+              }}
+              width={p.width}
+              height={p.height}
+              className="mx-auto mb-2 rounded-sm shadow-lg"
+            />
+          ))
+        ) : (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
               <p className="text-sm text-muted-foreground">No preview yet</p>
