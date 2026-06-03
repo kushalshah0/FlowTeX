@@ -5,7 +5,7 @@ import * as pdfjs from "pdfjs-dist"
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist"
 import { compileLatex } from "@/lib/compile"
 import { Button } from "@/components/ui/button"
-import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ChevronDown, Download, Play, Terminal } from "lucide-react"
+import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ChevronDown, Download, Play, Terminal, Loader2 } from "lucide-react"
 import type { ProjectFile } from "@/types"
 
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
@@ -274,6 +274,11 @@ export function PdfPreview({ files }: PdfPreviewProps) {
         </div>
       </div>
       <div className="flex-1 overflow-y-auto" ref={containerRef} />
+      {compiling && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
       {!hasPdf && !compiling && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
