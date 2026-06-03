@@ -14,6 +14,14 @@ interface PdfPreviewProps {
   files: ProjectFile[]
 }
 
+interface TextItem {
+  str: string
+  tx: number
+  ty: number
+  width: number
+  height: number
+}
+
 export function PdfPreview({ files }: PdfPreviewProps) {
   const [logs, setLogs] = useState<string[]>([])
   const [compiling, setCompiling] = useState(false)
@@ -29,6 +37,11 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   const docRef = useRef<PDFDocumentProxy | null>(null)
   const pdfDataRef = useRef<ArrayBuffer | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const textItemsRef = useRef<Record<number, TextItem[]>>({})
+  const viewportHeightsRef = useRef<Record<number, number>>({})
+  const sourceContentRef = useRef("")
+  const scaleRef = useRef(1)
+  scaleRef.current = scale
 
   useEffect(() => {
     if (!docRef.current) return
@@ -42,6 +55,8 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
       const count = Math.min(doc.numPages, 100)
       const bufs: HTMLCanvasElement[] = []
+      const newTextItems: Record<number, TextItem[]> = {}
+      const newViewportHeights: Record<number, number> = {}
 
       for (let i = 1; i <= count; i++) {
         if (cancelled) break
@@ -61,6 +76,17 @@ export function PdfPreview({ files }: PdfPreviewProps) {
             canvasContext: canvas.getContext("2d")!,
             viewport,
           }).promise
+
+          const vp1 = page.getViewport({ scale: 1 })
+          newViewportHeights[i] = vp1.height
+          const tc = await page.getTextContent()
+          newTextItems[i] = tc.items.map((ti: any) => ({
+            str: ti.str,
+            tx: ti.transform[4],
+            ty: ti.transform[5],
+            width: ti.width,
+            height: ti.height,
+          }))
         } catch {
           break
         }
@@ -69,6 +95,8 @@ export function PdfPreview({ files }: PdfPreviewProps) {
       if (!cancelled && bufs.length > 0) {
         container.innerHTML = ""
         for (const c of bufs) container.appendChild(c)
+        textItemsRef.current = newTextItems
+        viewportHeightsRef.current = newViewportHeights
         setCurrentPage(1)
       }
     }
@@ -101,6 +129,8 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   const handleCompile = useCallback(async (e: CustomEvent) => {
     const { content } = e.detail
     if (!content || compilingRef.current) return
+
+    sourceContentRef.current = content
 
     compilingRef.current = true
     setCompiling(true)
@@ -136,6 +166,64 @@ export function PdfPreview({ files }: PdfPreviewProps) {
       setShowingLogs(true)
     }
   }, [logs])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const onClick = (e: MouseEvent) => {
+      const s = scaleRef.current
+      const items = textItemsRef.current
+      const heights = viewportHeightsRef.current
+      const source = sourceContentRef.current
+      if (!source) return
+
+      const canvas = (e.target as HTMLElement).closest("canvas")
+      if (!canvas) return
+
+      const childIndex = Array.from(container.children).indexOf(canvas)
+      if (childIndex < 0) return
+      const pageIdx = childIndex + 1
+
+      const pageItems = items[pageIdx]
+      const pageHeight = heights[pageIdx]
+      if (!pageItems || !pageHeight) return
+
+      const rect = canvas.getBoundingClientRect()
+      const cx = e.clientX - rect.left
+      const cy = e.clientY - rect.top
+
+      const pdfX = cx / s
+      const pdfY = pageHeight - cy / s
+
+      let best: TextItem | null = null
+      let bestDist = Infinity
+      for (const item of pageItems) {
+        const dx = item.tx - pdfX
+        const dy = item.ty - pdfY
+        const d = dx * dx + dy * dy
+        if (d < bestDist) {
+          bestDist = d
+          best = item
+        }
+      }
+
+      if (!best || bestDist > 400) return
+      const text = best.str.trim()
+      if (!text || text.length < 2) return
+
+      const lines = source.split("\n")
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes(text)) {
+          window.dispatchEvent(new CustomEvent("goto-line", { detail: { line: i + 1 } }))
+          return
+        }
+      }
+    }
+
+    container.addEventListener("click", onClick)
+    return () => container.removeEventListener("click", onClick)
+  }, [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

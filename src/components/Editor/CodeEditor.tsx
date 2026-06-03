@@ -52,10 +52,26 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
     const triggerCompile = () => dispatchCompile()
     window.addEventListener("request-compile", triggerCompile)
 
+    const goToLine = (e: Event) => {
+      const { line } = (e as CustomEvent).detail
+      if (!line || !viewRef.current) return
+      const view = viewRef.current
+      const doc = view.state.doc
+      if (line < 1 || line > doc.lines) return
+      const pos = doc.line(line).from
+      view.dispatch({
+        selection: { anchor: pos },
+        scrollIntoView: true,
+      })
+      view.focus()
+    }
+    window.addEventListener("goto-line", goToLine)
+
     return () => {
       view.destroy()
       viewRef.current = null
       window.removeEventListener("request-compile", triggerCompile)
+      window.removeEventListener("goto-line", goToLine)
     }
   }, [file.id, file.file_name])
 
