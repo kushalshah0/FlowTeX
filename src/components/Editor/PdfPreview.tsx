@@ -29,7 +29,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
       if (result.pdf) {
         if (pdfRef.current) URL.revokeObjectURL(pdfRef.current)
-        const url = URL.createObjectURL(new Blob([result.pdf], { type: "application/pdf" }))
+        const url = URL.createObjectURL(new Blob([result.pdf], { type: "application/pdf" })) + "#toolbar=0"
         pdfRef.current = url
         setPdfUrl(url)
       }
