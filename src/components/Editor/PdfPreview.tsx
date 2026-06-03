@@ -5,7 +5,7 @@ import * as pdfjs from "pdfjs-dist"
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist"
 import { compileLatex } from "@/lib/compile"
 import { Button } from "@/components/ui/button"
-import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ChevronDown, Download, Play, Terminal, Loader2 } from "lucide-react"
+import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Download, Play, Terminal, Loader2, Eye } from "lucide-react"
 import type { ProjectFile } from "@/types"
 
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
@@ -23,7 +23,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
   const [zoomValue, setZoomValue] = useState("100")
   const zoomInputRef = useRef<HTMLInputElement>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [logOpen, setLogOpen] = useState(false)
+  const [showingLogs, setShowingLogs] = useState(false)
   const compilingRef = useRef(false)
   const loadingTaskRef = useRef<PDFDocumentLoadingTask | null>(null)
   const docRef = useRef<PDFDocumentProxy | null>(null)
@@ -104,6 +104,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
     compilingRef.current = true
     setCompiling(true)
+    const ts = Date.now()
     setNumPages(0)
     if (containerRef.current) containerRef.current.innerHTML = ""
 
@@ -116,8 +117,11 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
       if (result.log && !result.log.includes("Compilation succeeded")) {
         const lines = result.log.split("\n").filter(Boolean)
-        setLogs((prev) => [...prev, ...lines])
+        setLogs((prev) => [...prev, ...lines.slice(-20)])
       }
+
+      const elapsed = ((Date.now() - ts) / 1000).toFixed(1)
+      setLogs((prev) => [...prev, `Compilation succeeded (${elapsed}s)`])
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Compilation failed"
       setLogs((prev) => [...prev, message])
@@ -129,17 +133,25 @@ export function PdfPreview({ files }: PdfPreviewProps) {
 
   useEffect(() => {
     if (logs.some((l) => /error|failed/i.test(l))) {
-      setLogOpen(true)
+      setShowingLogs(true)
     }
   }, [logs])
 
   useEffect(() => {
-    const toggleLogs = () => setLogOpen((o) => !o)
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return
+        e.preventDefault()
+        setShowingLogs(false)
+        window.dispatchEvent(new CustomEvent("request-compile"))
+      }
+    }
     window.addEventListener("compile-latex", handleCompile as unknown as EventListener)
-    window.addEventListener("toggle-logs", toggleLogs)
+    window.addEventListener("keydown", onKey)
     return () => {
       window.removeEventListener("compile-latex", handleCompile as unknown as EventListener)
-      window.removeEventListener("toggle-logs", toggleLogs)
+      window.removeEventListener("keydown", onKey)
       if (loadingTaskRef.current) loadingTaskRef.current.destroy()
     }
   }, [handleCompile])
@@ -189,7 +201,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => window.dispatchEvent(new CustomEvent("request-compile"))}
+            onClick={() => { setShowingLogs(false); window.dispatchEvent(new CustomEvent("request-compile")) }}
             disabled={compiling}
             title="Compile (Cmd+Enter)"
           >
@@ -198,11 +210,21 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
-            onClick={() => setLogOpen((o) => !o)}
-            title="Toggle logs"
+            className={`h-7 w-7 ${showingLogs ? "bg-accent" : ""}`}
+            onClick={() => setShowingLogs(true)}
+            title="Show logs"
           >
             <Terminal className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 ${!showingLogs ? "bg-accent" : ""}`}
+            onClick={() => setShowingLogs(false)}
+            disabled={!hasPdf}
+            title="Show preview"
+          >
+            <Eye className="h-3.5 w-3.5" />
           </Button>
         </div>
 
@@ -273,14 +295,14 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           </Button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto" ref={containerRef} />
+      <div className={`flex-1 overflow-y-auto ${showingLogs ? "hidden" : ""}`} ref={containerRef} />
       {compiling && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className={`absolute inset-0 flex items-center justify-center pointer-events-none ${showingLogs ? "hidden" : ""}`}>
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
       {!hasPdf && !compiling && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className={`absolute inset-0 flex items-center justify-center pointer-events-none ${showingLogs ? "hidden" : ""}`}>
           <div className="text-center">
             <p className="text-sm text-muted-foreground">No preview yet</p>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -289,41 +311,24 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           </div>
         </div>
       )}
-      {(logOpen || logs.length > 0) && (
-        <div className="shrink-0 border-t bg-background">
-          <div className="flex items-center justify-between px-2 py-1">
-            <button
-              onClick={() => setLogOpen((o) => !o)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              {logOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-              Logs ({logs.length})
-            </button>
-            <button
-              onClick={() => { setLogs([]); setLogOpen(false) }}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Clear
-            </button>
-          </div>
-          {logOpen && (
-            <div className="max-h-40 overflow-y-auto border-t p-2">
-              {logs.length === 0 ? (
-                <p className="font-mono text-xs text-muted-foreground">No logs yet</p>
-              ) : (
-                logs.map((log, i) => (
-                  <p
-                    key={i}
-                    className={`font-mono text-xs leading-relaxed ${
-                      /error|failed/i.test(log)
-                        ? "text-destructive"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {log}
-                  </p>
-                ))
-              )}
+      {showingLogs && (
+        <div className="flex-1 overflow-y-auto p-4">
+          {logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No logs yet</p>
+          ) : (
+            <div className="space-y-1">
+              {logs.map((log, i) => (
+                <p
+                  key={i}
+                  className={`font-mono text-xs leading-relaxed ${
+                    /error|failed/i.test(log)
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {log}
+                </p>
+              ))}
             </div>
           )}
         </div>
