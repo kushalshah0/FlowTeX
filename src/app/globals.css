@@ -106,3 +106,18 @@ body {
   color: var(--fg);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+.cm-gutters {
+  background: var(--bg) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+.cm-gutterElement {
+  background: var(--bg) !important;
+  color: var(--muted-fg) !important;
+}
+
+.cm-activeLineGutter {
+  background: var(--muted) !important;
+  color: var(--fg) !important;
+}

@@ -289,11 +289,11 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           </div>
         </div>
       )}
-      {logs.length > 0 && (
+      {(logOpen || logs.length > 0) && (
         <div className="shrink-0 border-t bg-background">
           <div className="flex items-center justify-between px-2 py-1">
             <button
-              onClick={() => setLogOpen(!logOpen)}
+              onClick={() => setLogOpen((o) => !o)}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
             >
               {logOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
@@ -308,18 +308,22 @@ export function PdfPreview({ files }: PdfPreviewProps) {
           </div>
           {logOpen && (
             <div className="max-h-40 overflow-y-auto border-t p-2">
-              {logs.map((log, i) => (
-                <p
-                  key={i}
-                  className={`font-mono text-xs leading-relaxed ${
-                    /error|failed/i.test(log)
-                      ? "text-destructive"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {log}
-                </p>
-              ))}
+              {logs.length === 0 ? (
+                <p className="font-mono text-xs text-muted-foreground">No logs yet</p>
+              ) : (
+                logs.map((log, i) => (
+                  <p
+                    key={i}
+                    className={`font-mono text-xs leading-relaxed ${
+                      /error|failed/i.test(log)
+                        ? "text-destructive"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {log}
+                  </p>
+                ))
+              )}
             </div>
           )}
         </div>
