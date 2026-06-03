@@ -82,12 +82,12 @@ export function PdfPreview({ files }: PdfPreviewProps) {
     pdfDataRef.current = null
 
     try {
+      pdfDataRef.current = data.slice(0)
       const loadingTask = pdfjs.getDocument({ data })
       loadingTaskRef.current = loadingTask
       const doc = await loadingTask.promise
 
       docRef.current = doc
-      pdfDataRef.current = data
       setNumPages(doc.numPages)
     } catch {
       setLogs((prev) => [...prev, "Failed to load PDF"])
@@ -164,8 +164,10 @@ export function PdfPreview({ files }: PdfPreviewProps) {
     const a = document.createElement("a")
     a.href = url
     a.download = "output.pdf"
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
   }
 
   const hasPdf = numPages > 0
