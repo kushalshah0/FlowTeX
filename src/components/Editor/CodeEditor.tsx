@@ -4,7 +4,12 @@ import { useEffect, useRef } from "react"
 import { EditorView, basicSetup } from "codemirror"
 import { EditorState } from "@codemirror/state"
 import { keymap } from "@codemirror/view"
+import * as Y from "yjs"
+import YPartyKitProvider from "y-partykit/provider"
+import { yCollab } from "y-codemirror.next"
 import type { ProjectFile } from "@/types"
+
+const PARTYKIT_HOST = process.env.NEXT_PUBLIC_PARTYKIT_HOST || "flowtex.kushalshah0.partykit.dev"
 
 interface CodeEditorProps {
   file: ProjectFile
@@ -18,15 +23,25 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
   useEffect(() => {
     if (!editorRef.current) return
 
+    const ydoc = new Y.Doc()
+    const ytext = ydoc.getText("content")
+    const provider = new YPartyKitProvider(PARTYKIT_HOST, `file-${file.id}`, ydoc)
+
+    provider.on("sync", (synced: boolean) => {
+      if (synced && ytext.toString() === "" && file.content) {
+        ytext.insert(0, file.content)
+      }
+    })
+
     const dispatchCompile = () => {
-      const content = viewRef.current?.state.doc.toString() || ""
+      const content = ytext.toString()
       window.dispatchEvent(new CustomEvent("compile-latex", {
         detail: { file, content },
       }))
     }
 
     const state = EditorState.create({
-      doc: file.content || "",
+      doc: ytext.toString(),
       extensions: [
         basicSetup,
         keymap.of([
@@ -38,6 +53,7 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
             },
           },
         ]),
+        yCollab(ytext, provider.awareness),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             onUpdate(file.id, update.state.doc.toString())
@@ -55,36 +71,26 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
     const goToLine = (e: Event) => {
       const { line } = (e as CustomEvent).detail
       if (!line || !viewRef.current) return
-      const view = viewRef.current
-      const doc = view.state.doc
-      if (line < 1 || line > doc.lines) return
-      const pos = doc.line(line).from
-      view.dispatch({
-        selection: { anchor: pos },
+      const v = viewRef.current
+      const d = v.state.doc
+      if (line < 1 || line > d.lines) return
+      v.dispatch({
+        selection: { anchor: d.line(line).from },
         scrollIntoView: true,
       })
-      view.focus()
+      v.focus()
     }
     window.addEventListener("goto-line", goToLine)
 
     return () => {
       view.destroy()
       viewRef.current = null
+      provider.destroy()
+      ydoc.destroy()
       window.removeEventListener("request-compile", triggerCompile)
       window.removeEventListener("goto-line", goToLine)
     }
   }, [file.id, file.file_name])
-
-  useEffect(() => {
-    if (viewRef.current && file.content !== undefined) {
-      const current = viewRef.current.state.doc.toString()
-      if (current !== file.content) {
-        viewRef.current.dispatch({
-          changes: { from: 0, to: current.length, insert: file.content || "" },
-        })
-      }
-    }
-  }, [file.content])
 
   return (
     <div className="flex h-full flex-col">

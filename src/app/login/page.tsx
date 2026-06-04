@@ -20,7 +20,7 @@ export default function LoginPage() {
     setError("")
 
     if (username === HARDCODED_USER && password === HARDCODED_PASS) {
-      document.cookie = "auth_token=nexustex_demo; path=/; max-age=86400"
+      document.cookie = "auth_token=flowtex_demo; path=/; max-age=86400"
       router.push("/dashboard")
     } else {
       setError("Invalid credentials")

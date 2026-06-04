@@ -7,7 +7,7 @@ export default async function Home() {
   const cookieStore = await cookies();
   const auth = cookieStore.get("auth_token");
 
-  if (auth?.value === "nexustex_demo") {
+  if (auth?.value === "flowtex_demo") {
     redirect("/dashboard");
   }
 

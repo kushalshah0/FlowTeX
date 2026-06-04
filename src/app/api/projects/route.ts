@@ -9,7 +9,7 @@ function unauthorized() {
 export async function GET() {
   const cookieStore = await cookies()
   const authCookie = cookieStore.get("auth_token")
-  if (!authCookie || authCookie.value !== "nexustex_demo") return unauthorized()
+  if (!authCookie || authCookie.value !== "flowtex_demo") return unauthorized()
 
   const supabase = createClient(cookieStore)
   const { data, error } = await supabase
@@ -24,7 +24,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies()
   const authCookie = cookieStore.get("auth_token")
-  if (!authCookie || authCookie.value !== "nexustex_demo") return unauthorized()
+  if (!authCookie || authCookie.value !== "flowtex_demo") return unauthorized()
 
   const body = await request.json()
   const supabase = createClient(cookieStore)

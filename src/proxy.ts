@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
 
   const authCookie = request.cookies.get("auth_token");
 
-  if (!authCookie || authCookie.value !== "nexustex_demo") {
+  if (!authCookie || authCookie.value !== "flowtex_demo") {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

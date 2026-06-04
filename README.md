@@ -1,4 +1,4 @@
-# NexusTeX
+# FlowTex
 
 A collaborative LaTeX editor with real-time compilation and PDF preview.
 
@@ -32,6 +32,6 @@ Open [http://localhost:3000](http://localhost:3000), log in with `admin` / `pass
 - **PDF:** pdf.js (pdfjs-dist v6)
 - **Compiler:** LaTeX-On-HTTP API (TeXLive 2026)
 - **Database:** Supabase (demo mode, RLS disabled)
-- **Auth:** Cookie-based (`auth_token=nexustex_demo`)
-- **Realtime:** PartyKit (`nexustex.kushalshah0.partykit.dev`)
+- **Auth:** Cookie-based (`auth_token=flowtex_demo`)
+- **Realtime:** PartyKit (`flowtex.kushalshah0.partykit.dev`)
 - **Styling:** Tailwind CSS v4
