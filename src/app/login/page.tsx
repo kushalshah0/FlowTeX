@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowRight, Users, FileText, BookOpen, Eye, EyeOff } from "lucide-react"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -43,6 +44,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
       {/* Left — brand */}
       <div className="relative hidden w-1/2 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 p-12 text-white md:flex">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.03),transparent_70%)]" />
