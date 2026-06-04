@@ -8,8 +8,11 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, LogOut, Shield, UserCog, Eye, EyeOff, FileCode } from "lucide-react"
+import { Plus, Trash2, LogOut, Shield, UserCog, Eye, EyeOff, FileCode, Pencil } from "lucide-react"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select"
 
 interface User {
   id: string
@@ -43,6 +46,12 @@ export default function AdminUsersPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<User | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editUsername, setEditUsername] = useState("")
+  const [editPassword, setEditPassword] = useState("")
+  const [editRole, setEditRole] = useState("user")
+  const [editShowPassword, setEditShowPassword] = useState(false)
   const router = useRouter()
 
   const fetchUsers = () => {
@@ -81,6 +90,43 @@ export default function AdminUsersPage() {
   const confirmDeleteUser = (user: User) => {
     setDeleteTarget(user)
     setDeleteOpen(true)
+  }
+
+  const confirmEditUser = (user: User) => {
+    setEditTarget(user)
+    setEditUsername(user.username)
+    setEditRole(user.role)
+    setEditPassword("")
+    setEditOpen(true)
+  }
+
+  const saveUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editTarget) return
+    setError("")
+    const body: Record<string, unknown> = { id: editTarget.id }
+    if (editUsername !== editTarget.username) body.username = editUsername
+    if (editRole !== editTarget.role) body.role = editRole
+    if (editPassword) body.password = editPassword
+
+    if (Object.keys(body).length === 1) {
+      setEditOpen(false)
+      return
+    }
+
+    const res = await fetch("/api/users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error || "Failed to update user")
+      return
+    }
+    setEditOpen(false)
+    setEditTarget(null)
+    fetchUsers()
   }
 
   const deleteUser = async () => {
@@ -180,6 +226,49 @@ export default function AdminUsersPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent className="sm:max-w-lg max-w-[calc(100vw-2rem)] rounded-lg">
+              <form onSubmit={saveUser}>
+                <DialogHeader>
+                  <DialogTitle>Edit User</DialogTitle>
+                  <DialogDescription>Update user details for {editTarget?.username}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Username</label>
+                    <Input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">New Password</label>
+                    <div className="relative">
+                      <Input type={editShowPassword ? "text" : "password"} placeholder="Leave blank to keep current" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} className="pr-9" />
+                      <button type="button" onClick={() => setEditShowPassword(!editShowPassword)} className="absolute right-0 top-0 flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                        {editShowPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Role</label>
+                    <Select value={editRole} onValueChange={setEditRole}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                </div>
+                <DialogFooter className="flex-col gap-2 sm:flex-row">
+                  <Button type="button" variant="outline" onClick={() => setEditOpen(false)} className="w-full sm:w-auto">Cancel</Button>
+                  <Button type="submit" className="w-full sm:w-auto">Save Changes</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {loading ? (
@@ -199,7 +288,7 @@ export default function AdminUsersPage() {
                   <th className="px-4 py-3 pl-5">User</th>
                   <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3 pr-5" />
+                  <th className="px-4 py-3 pr-5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -229,17 +318,28 @@ export default function AdminUsersPage() {
                       })}
                     </td>
                     <td className="px-4 py-3 pr-5 text-right">
-                      {u.role !== "admin" && (
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => confirmDeleteUser(u)}
-                          title="Delete user"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => confirmEditUser(u)}
+                          title="Edit user"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                      )}
+                        {u.role !== "admin" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => confirmDeleteUser(u)}
+                            title="Delete user"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
