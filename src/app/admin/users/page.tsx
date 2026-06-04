@@ -47,6 +47,7 @@ export default function AdminUsersPage() {
   const [creating, setCreating] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [editTarget, setEditTarget] = useState<User | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [editUsername, setEditUsername] = useState("")
@@ -140,11 +141,13 @@ export default function AdminUsersPage() {
 
   const deleteUser = async () => {
     if (!deleteTarget) return
+    setDeleting(true)
     await fetch("/api/users", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: deleteTarget.id }),
     })
+    setDeleting(false)
     setDeleteOpen(false)
     setDeleteTarget(null)
     fetchUsers()
@@ -218,7 +221,10 @@ export default function AdminUsersPage() {
                   <Button type="submit" className="w-full sm:w-auto" disabled={creating}>
                     {creating ? (
                       <span className="flex items-center gap-1.5">
-                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                          <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                        </svg>
                         Creating...
                       </span>
                     ) : "Create Account"}
@@ -238,7 +244,17 @@ export default function AdminUsersPage() {
               </DialogHeader>
               <DialogFooter className="flex-col gap-2 sm:flex-row">
                 <Button variant="outline" onClick={() => setDeleteOpen(false)} className="w-full sm:w-auto">Cancel</Button>
-                <Button variant="destructive" onClick={deleteUser} className="w-full sm:w-auto">Delete</Button>
+                <Button variant="destructive" onClick={deleteUser} className="w-full sm:w-auto" disabled={deleting}>
+                  {deleting ? (
+                    <span className="flex items-center gap-1.5">
+                      <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                          <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                        </svg>
+                      Deleting...
+                    </span>
+                  ) : "Delete"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -283,7 +299,10 @@ export default function AdminUsersPage() {
                   <Button type="submit" className="w-full sm:w-auto" disabled={saving}>
                     {saving ? (
                       <span className="flex items-center gap-1.5">
-                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                          <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                        </svg>
                         Saving...
                       </span>
                     ) : "Save Changes"}
