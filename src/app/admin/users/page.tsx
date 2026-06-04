@@ -9,6 +9,7 @@ import {
   DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus, Trash2, LogOut, Shield, UserCog, Eye, EyeOff, FileCode } from "lucide-react"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface User {
   id: string
@@ -110,9 +111,12 @@ export default function AdminUsersPage() {
               <p className="text-xs text-muted-foreground">Manage FlowTex accounts</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} title="Sign out">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" onClick={handleSignOut} title="Sign out">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
