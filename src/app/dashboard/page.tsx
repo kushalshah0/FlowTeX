@@ -21,6 +21,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus, FileText, LogOut, Users } from "lucide-react"
+import { ThemeToggle } from "@/components/ThemeToggle"
 import type { Project } from "@/types"
 
 export default function DashboardPage() {
@@ -81,6 +82,7 @@ export default function DashboardPage() {
               Users
             </Button>
           )}
+          <ThemeToggle />
           <Button variant="ghost" size="icon" onClick={handleSignOut}>
             <LogOut className="h-4 w-4" />
           </Button>
