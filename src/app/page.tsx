@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { decodeSession } from "@/lib/auth"
 import Link from "next/link"
 import { ArrowRight, FileCode, GitBranch, Users, Zap, Shield, Layout, type LucideIcon } from "lucide-react"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 export const dynamic = "force-dynamic"
 
@@ -100,17 +101,12 @@ export default async function Home() {
             <a href="#how-it-works" className="transition-colors hover:text-foreground">How it Works</a>
           </nav>
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Sign in
-            </Link>
+            <ThemeToggle />
             <Link
               href="/login"
               className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-4 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
             >
-              Get Started
+              Sign in
             </Link>
           </div>
         </div>
@@ -118,7 +114,7 @@ export default async function Home() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28">
+        <section className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28 animate-fade-in">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.03),transparent_70%)]" />
           <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary/5 to-transparent blur-3xl" />
           <div className="mx-auto max-w-6xl px-6">
@@ -212,7 +208,7 @@ export default async function Home() {
         </section>
 
         {/* Features */}
-        <section id="features" className="border-t py-20 md:py-28">
+        <section id="features" className="border-t py-20 md:py-28 animate-fade-up">
           <div className="mx-auto max-w-6xl px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
