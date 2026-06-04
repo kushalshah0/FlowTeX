@@ -44,6 +44,7 @@ export default function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState("")
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<User | null>(null)
@@ -52,6 +53,7 @@ export default function AdminUsersPage() {
   const [editPassword, setEditPassword] = useState("")
   const [editRole, setEditRole] = useState("user")
   const [editShowPassword, setEditShowPassword] = useState(false)
+  const [saving, setSaving] = useState(false)
   const router = useRouter()
 
   const fetchUsers = () => {
@@ -71,6 +73,7 @@ export default function AdminUsersPage() {
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setCreating(true)
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -79,11 +82,13 @@ export default function AdminUsersPage() {
     if (!res.ok) {
       const data = await res.json()
       setError(data.error || "Failed to create user")
+      setCreating(false)
       return
     }
     setOpen(false)
     setNewUsername("")
     setNewPassword("")
+    setCreating(false)
     fetchUsers()
   }
 
@@ -104,12 +109,14 @@ export default function AdminUsersPage() {
     e.preventDefault()
     if (!editTarget) return
     setError("")
+    setSaving(true)
     const body: Record<string, unknown> = { id: editTarget.id }
     if (editUsername !== editTarget.username) body.username = editUsername
     if (editRole !== editTarget.role) body.role = editRole
     if (editPassword) body.password = editPassword
 
     if (Object.keys(body).length === 1) {
+      setSaving(false)
       setEditOpen(false)
       return
     }
@@ -122,8 +129,10 @@ export default function AdminUsersPage() {
     if (!res.ok) {
       const data = await res.json()
       setError(data.error || "Failed to update user")
+      setSaving(false)
       return
     }
+    setSaving(false)
     setEditOpen(false)
     setEditTarget(null)
     fetchUsers()
@@ -206,7 +215,14 @@ export default function AdminUsersPage() {
                   {error && <p className="text-sm text-destructive">{error}</p>}
                 </div>
                 <DialogFooter className="flex-col gap-2 sm:flex-row">
-                  <Button type="submit" className="w-full sm:w-auto">Create Account</Button>
+                  <Button type="submit" className="w-full sm:w-auto" disabled={creating}>
+                    {creating ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Creating...
+                      </span>
+                    ) : "Create Account"}
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -264,7 +280,14 @@ export default function AdminUsersPage() {
                 </div>
                 <DialogFooter className="flex-col gap-2 sm:flex-row">
                   <Button type="button" variant="outline" onClick={() => setEditOpen(false)} className="w-full sm:w-auto">Cancel</Button>
-                  <Button type="submit" className="w-full sm:w-auto">Save Changes</Button>
+                  <Button type="submit" className="w-full sm:w-auto" disabled={saving}>
+                    {saving ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Saving...
+                      </span>
+                    ) : "Save Changes"}
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
