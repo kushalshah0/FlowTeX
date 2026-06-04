@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { decodeSession } from "@/lib/auth";
 
 const publicPaths = [
+  "/",
   "/_next",
   "/favicon.ico",
   "/wasm",
