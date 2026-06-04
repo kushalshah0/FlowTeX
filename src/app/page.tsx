@@ -92,9 +92,7 @@ export default async function Home() {
       <header className="fixed inset-x-0 top-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-primary-foreground">
-              F
-            </div>
+            <FileCode className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold">FlowTex</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
@@ -278,9 +276,7 @@ export default async function Home() {
       <footer className="border-t py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-center text-xs text-muted-foreground md:flex-row">
           <div className="flex items-center gap-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded-[4px] bg-primary text-[8px] font-bold text-primary-foreground">
-              F
-            </div>
+            <FileCode className="h-3.5 w-3.5 text-primary" />
             <span className="text-xs font-medium text-foreground">FlowTex</span>
           </div>
           <p>&copy; {new Date().getFullYear()} FlowTex. All rights reserved.</p>
