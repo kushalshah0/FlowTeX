@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, LogOut, Shield, UserCog, Eye, EyeOff } from "lucide-react"
+import { Plus, Trash2, LogOut, Shield, UserCog, Eye, EyeOff, FileCode } from "lucide-react"
 
 interface User {
   id: string
@@ -104,9 +104,7 @@ export default function AdminUsersPage() {
       <header className="border-b bg-background px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <UserCog className="h-4 w-4 text-primary" />
-            </div>
+            <FileCode className="h-4 w-4 text-primary" />
             <div>
               <h1 className="text-sm font-semibold">User Management</h1>
               <p className="text-xs text-muted-foreground">Manage FlowTex accounts</p>
