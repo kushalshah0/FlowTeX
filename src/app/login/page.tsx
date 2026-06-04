@@ -4,11 +4,12 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Users, FileText, BookOpen, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -31,7 +32,8 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/dashboard")
+      const { role } = await res.json()
+      router.push(role === "admin" ? "/admin/users" : "/dashboard")
     } catch {
       setError("Connection error")
     } finally {
@@ -41,11 +43,42 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Left — form */}
+      {/* Left — brand */}
+      <div className="relative hidden w-1/2 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 p-12 text-white md:flex">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.03),transparent_70%)]" />
+        <div className="pointer-events-none absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-gradient-to-tr from-blue-500/10 to-transparent blur-3xl" />
+
+        <div className="relative z-10 text-center">
+          <h1 className="mb-3 text-4xl font-bold tracking-tight">FlowTex</h1>
+          <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
+            Compile LaTeX in real-time, see the PDF instantly, edit together with your team.
+          </p>
+          <div className="mt-10 grid grid-cols-3 gap-6 text-center">
+            <div>
+              <Users className="mx-auto mb-2 h-5 w-5 text-zinc-400" />
+              <div className="text-sm font-semibold text-white">Real-time</div>
+              <div className="mt-1 text-xs text-zinc-500">Sync via CRDT</div>
+            </div>
+            <div>
+              <FileText className="mx-auto mb-2 h-5 w-5 text-zinc-400" />
+              <div className="text-sm font-semibold text-white">LaTeX</div>
+              <div className="mt-1 text-xs text-zinc-500">TeXLive 2026</div>
+            </div>
+            <div>
+              <BookOpen className="mx-auto mb-2 h-5 w-5 text-zinc-400" />
+              <div className="text-sm font-semibold text-white">PDF</div>
+              <div className="mt-1 text-xs text-zinc-500">Live Preview</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right — form */}
       <div className="flex w-full items-center justify-center bg-background p-8 md:w-1/2">
         <div className="w-full max-w-sm">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold tracking-tight">FlowTex</h1>
+          <div className="mb-8 md:hidden">
+            <h1 className="text-2xl font-bold">FlowTex</h1>
             <p className="mt-1 text-sm text-muted-foreground">Collaborative LaTeX editor</p>
           </div>
 
@@ -67,14 +100,24 @@ export default function LoginPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Password</label>
-              <Input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-10"
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-10 pr-9"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -88,61 +131,6 @@ export default function LoginPage() {
               {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
             </Button>
           </form>
-        </div>
-      </div>
-
-      {/* Right — rendered PDF page */}
-      <div className="relative hidden w-1/2 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 md:flex">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.03),transparent_70%)]" />
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-gradient-to-tr from-blue-500/10 to-transparent blur-3xl" />
-
-        <div className="relative z-10 flex flex-col items-center gap-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-zinc-400">
-            Real-time collaboration · Live preview · TeXLive 2026
-          </div>
-
-          {/* Stacked pages */}
-          <div className="relative h-[380px] w-72">
-            {/* Back page */}
-            <div className="absolute top-2 left-2 aspect-[210/297] w-full rotate-6 rounded-sm border border-white/5 bg-white/80 p-6 shadow-lg">
-              <div className="text-[9px] text-zinc-300">
-                <div className="text-center text-xs font-bold tracking-tight">References</div>
-              </div>
-            </div>
-
-            {/* Front page */}
-            <div className="absolute inset-0 aspect-[210/297] w-full -rotate-2 rounded-sm bg-white p-6 shadow-2xl shadow-black/40 transition-transform hover:rotate-0">
-              <div className="h-full text-[9px] leading-normal text-black">
-                <div className="mb-2 text-center text-xs font-bold tracking-tight">
-                  A Simple Document
-                </div>
-                <div className="mb-1 text-[8px] font-semibold">John Doe</div>
-                <div className="mb-3 text-[8px] font-semibold text-zinc-400">
-                  {"\\today"}
-                </div>
-                <div className="mb-1.5 text-[8px] font-semibold">1 Introduction</div>
-                <p className="mb-2 text-[7.5px] leading-relaxed text-zinc-600">
-                  This is a collaborative LaTeX document. Multiple users can
-                  edit simultaneously with real-time sync.
-                </p>
-                <div className="mb-1.5 text-[8px] font-semibold">2 Method</div>
-                <p className="mb-2 text-[7.5px] leading-relaxed text-zinc-600">
-                  The system uses Yjs CRDT for conflict-free replication and
-                  compiles via TeXLive 2026.
-                </p>
-                <div className="mt-4 rounded border border-zinc-200 p-2">
-                  <div className="mb-1 text-[7px] font-semibold text-zinc-400">
-                    Compiled with FlowTex
-                  </div>
-                  <div className="flex items-center gap-1 text-[7px] text-zinc-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    Build succeeded (0.4s)
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
