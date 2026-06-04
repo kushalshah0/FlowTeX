@@ -22,28 +22,26 @@
   --ring: hsl(240 5.9% 10%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: hsl(240 10% 3.9%);
-    --fg: hsl(0 0% 98%);
-    --card: hsl(240 10% 3.9%);
-    --card-fg: hsl(0 0% 98%);
-    --popover: hsl(240 10% 3.9%);
-    --popover-fg: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-fg: hsl(240 5.9% 10%);
-    --secondary: hsl(240 3.7% 15.9%);
-    --secondary-fg: hsl(0 0% 98%);
-    --muted: hsl(240 3.7% 15.9%);
-    --muted-fg: hsl(240 5% 64.9%);
-    --accent: hsl(240 3.7% 15.9%);
-    --accent-fg: hsl(0 0% 98%);
-    --destructive: hsl(0 62.8% 30.6%);
-    --destructive-fg: hsl(0 0% 98%);
-    --border: hsl(240 3.7% 15.9%);
-    --input: hsl(240 3.7% 15.9%);
-    --ring: hsl(240 4.9% 83.9%);
-  }
+.dark {
+  --bg: hsl(240 10% 3.9%);
+  --fg: hsl(0 0% 98%);
+  --card: hsl(240 10% 3.9%);
+  --card-fg: hsl(0 0% 98%);
+  --popover: hsl(240 10% 3.9%);
+  --popover-fg: hsl(0 0% 98%);
+  --primary: hsl(0 0% 98%);
+  --primary-fg: hsl(240 5.9% 10%);
+  --secondary: hsl(240 3.7% 15.9%);
+  --secondary-fg: hsl(0 0% 98%);
+  --muted: hsl(240 3.7% 15.9%);
+  --muted-fg: hsl(240 5% 64.9%);
+  --accent: hsl(240 3.7% 15.9%);
+  --accent-fg: hsl(0 0% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-fg: hsl(0 0% 98%);
+  --border: hsl(240 3.7% 15.9%);
+  --input: hsl(240 3.7% 15.9%);
+  --ring: hsl(240 4.9% 83.9%);
 }
 
 @theme inline {
@@ -69,11 +67,27 @@
   --radius: 0.5rem;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-fade-up: fade-up 0.5s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @layer utilities {
   .text-foreground { color: var(--fg); }
   .bg-foreground { background-color: var(--fg); }
+}
+
+html {
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 * {
