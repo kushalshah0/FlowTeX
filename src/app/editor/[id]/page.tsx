@@ -76,6 +76,32 @@ export default function EditorPage() {
     }
   }, [id])
 
+  const handleRenameFile = useCallback(async (fileId: string, newName: string) => {
+    const res = await fetch(`/api/projects/${id}/files`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file_id: fileId, file_name: newName }),
+    })
+    if (!res.ok) return
+    const updated = await res.json()
+    setFiles((prev) => prev.map((f) => f.id === fileId ? { ...f, file_name: updated.file_name } : f))
+    setActiveFile((prev) => prev?.id === fileId ? { ...prev, file_name: updated.file_name } : prev)
+  }, [id])
+
+  const handleDeleteFile = useCallback(async (fileId: string) => {
+    const res = await fetch(`/api/projects/${id}/files`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file_id: fileId }),
+    })
+    if (!res.ok) return
+    setFiles((prev) => {
+      const next = prev.filter((f) => f.id !== fileId)
+      if (activeFile?.id === fileId) setActiveFile(next[0] ?? null)
+      return next
+    })
+  }, [id, activeFile])
+
   const handleFileUpdate = useCallback((fileId: string, content: string) => {
     latestContent.current.set(fileId, content)
 
@@ -132,6 +158,8 @@ export default function EditorPage() {
               activeFile={activeFile}
               onSelect={(f) => { setActiveFile(f); setSidebarOpen(false) }}
               onAddFile={(name) => { handleAddFile(name); setSidebarOpen(false) }}
+              onRenameFile={handleRenameFile}
+              onDeleteFile={handleDeleteFile}
               onBack={() => { setSidebarOpen(false); router.push("/dashboard") }}
               onClose={() => setSidebarOpen(false)}
             />
@@ -148,6 +176,8 @@ export default function EditorPage() {
             activeFile={activeFile}
             onSelect={setActiveFile}
             onAddFile={handleAddFile}
+            onRenameFile={handleRenameFile}
+            onDeleteFile={handleDeleteFile}
             onBack={() => router.push("/dashboard")}
           />
         </div>
