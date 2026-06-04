@@ -39,10 +39,12 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
     })
 
     const onAwarenessChange = () => {
-      const states = Array.from(provider.awareness.getStates().values())
+      const local = ydoc.clientID
+      const states = Array.from(provider.awareness.getStates().entries())
       const seen = new Set<string>()
       const users: Array<{ id: string; name: string; color: string }> = []
-      for (const s of states) {
+      for (const [clientID, s] of states) {
+        if (clientID === local) continue
         if (!s.name || !s.id || seen.has(s.id)) continue
         seen.add(s.id)
         users.push({ id: s.id, name: s.name, color: s.color })
@@ -53,8 +55,10 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
     onAwarenessChange()
 
     provider.on("sync", (synced: boolean) => {
-      if (synced && ytext.toString() === "" && file.content) {
-        ytext.insert(0, file.content)
+      if (synced) {
+        if (ytext.toString() === "" && file.content) {
+          ytext.insert(0, file.content)
+        }
       }
     })
 
