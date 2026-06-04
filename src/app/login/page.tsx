@@ -6,24 +6,36 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-const HARDCODED_USER = "admin"
-const HARDCODED_PASS = "password"
-
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setLoading(true)
 
-    if (username === HARDCODED_USER && password === HARDCODED_PASS) {
-      document.cookie = "auth_token=flowtex_demo; path=/; max-age=86400"
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || "Invalid credentials")
+        return
+      }
+
       router.push("/dashboard")
-    } else {
-      setError("Invalid credentials")
+    } catch {
+      setError("Connection error")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -31,7 +43,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign in to NexusTeX</CardTitle>
+          <CardTitle>FlowTex</CardTitle>
           <p className="text-sm text-muted-foreground">Collaborative LaTeX editor</p>
         </CardHeader>
         <CardContent>
@@ -52,8 +64,8 @@ export default function LoginPage() {
             {error && (
               <p className="text-sm text-destructive">{error}</p>
             )}
-            <Button type="submit" className="w-full">
-              Sign in
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
               Demo: admin / password

@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
+import { requireAuth } from "@/lib/api-auth"
 
 const TEXLIVE_API = "https://latex.ytotech.com/builds/sync"
 
-function unauthorized() {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-}
-
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get("auth_token")
-  if (!authCookie || authCookie.value !== "flowtex_demo") return unauthorized()
+  const session = await requireAuth()
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await request.json()
   const { content, files } = body as {

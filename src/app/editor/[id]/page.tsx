@@ -13,7 +13,7 @@ import type { ProjectFile } from "@/types"
 const DEFAULT_TEX = `\\documentclass{article}
 \\usepackage{amsmath}
 
-\\title{Hello, NexusTeX!}
+\\title{Hello, FlowTex!}
 \\author{User}
 
 \\begin{document}

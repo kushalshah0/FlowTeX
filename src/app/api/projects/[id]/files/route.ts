@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { requireAuth } from "@/lib/api-auth"
 import { cookies } from "next/headers"
-
-function unauthorized() {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-}
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get("auth_token")
-  if (!authCookie || authCookie.value !== "flowtex_demo") return unauthorized()
+  const session = await requireAuth()
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const supabase = createClient(cookieStore)
+  const supabase = createClient(await cookies())
   const { data, error } = await supabase
     .from("project_files")
     .select("*")
@@ -31,12 +27,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get("auth_token")
-  if (!authCookie || authCookie.value !== "flowtex_demo") return unauthorized()
+  const session = await requireAuth()
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await request.json()
-  const supabase = createClient(cookieStore)
+  const supabase = createClient(await cookies())
   const { data, error } = await supabase
     .from("project_files")
     .insert({
@@ -57,16 +52,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get("auth_token")
-  if (!authCookie || authCookie.value !== "flowtex_demo") return unauthorized()
+  const session = await requireAuth()
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await request.json()
   if (!body.file_id) {
     return NextResponse.json({ error: "file_id is required" }, { status: 400 })
   }
 
-  const supabase = createClient(cookieStore)
+  const supabase = createClient(await cookies())
   const { data, error } = await supabase
     .from("project_files")
     .update({ content: body.content, updated_at: new Date().toISOString() })

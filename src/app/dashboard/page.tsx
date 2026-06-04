@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, FileText, LogOut } from "lucide-react"
+import { Plus, FileText, LogOut, Users } from "lucide-react"
 import type { Project } from "@/types"
 
 export default function DashboardPage() {
@@ -61,13 +61,30 @@ export default function DashboardPage() {
     router.push("/login")
   }
 
+  const isAdmin = (() => {
+    try {
+      const m = document.cookie.match(/(?:^|;\s*)auth_token=([^;]*)/)
+      if (!m) return false
+      const raw = atob(m[1].replace(/-/g, "+").replace(/_/g, "/"))
+      return JSON.parse(raw).r === "admin"
+    } catch { return false }
+  })()
+
   return (
     <div className="min-h-screen p-6">
       <header className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">NexusTeX</h1>
-        <Button variant="ghost" size="icon" onClick={handleSignOut}>
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <h1 className="text-2xl font-bold">FlowTex</h1>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button variant="ghost" size="sm" onClick={() => router.push("/admin/users")}>
+              <Users className="mr-1.5 h-4 w-4" />
+              Users
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       <div className="mb-6 flex items-center justify-between">

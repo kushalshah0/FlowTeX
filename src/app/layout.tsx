@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "NexusTeX - Collaborative LaTeX Editor",
+  title: "FlowTex - Collaborative LaTeX Editor",
   description: "A local-first, cloud-synced collaborative LaTeX editor powered by WASM compilation",
 }
 
