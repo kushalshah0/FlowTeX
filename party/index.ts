@@ -91,7 +91,29 @@ export default class YjsServer implements Party.Server {
     }, 2000);
   }
 
+  private validateAuth(url: string): { u: string; r: string } | null {
+    try {
+      const parsed = new URL(url);
+      const token = parsed.searchParams.get("auth");
+      if (!token) return null;
+      const json = atob(token.replace(/-/g, "+").replace(/_/g, "/"));
+      const session = JSON.parse(json);
+      if (session && typeof session.u === "string" && typeof session.r === "string") {
+        return session;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
+    const session = this.validateAuth(ctx.request.url);
+    if (!session) {
+      conn.close(4001, "Unauthorized");
+      return;
+    }
+
     if (!this.loaded) await this.loadFromStorage();
     this.connClients.set(conn.id, new Set());
 
