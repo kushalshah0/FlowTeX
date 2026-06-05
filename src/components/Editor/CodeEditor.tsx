@@ -56,8 +56,8 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
 
     provider.on("sync", (synced: boolean) => {
       if (synced) {
-        if (ytext.toString() === "" && file.content) {
-          ytext.insert(0, file.content)
+        if (ytext.toString() === "") {
+          ytext.insert(0, file.content || "\n".repeat(20))
         }
       }
     })
