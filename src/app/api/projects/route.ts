@@ -22,7 +22,7 @@ export async function GET() {
   const { data: owned } = await supabase
     .from("projects")
     .select("*")
-    .or(`owner_id.eq.${userId},owner_id.is.null`)
+    .eq("owner_id", userId)
     .order("created_at", { ascending: false })
 
   const { data: collabRows } = await supabase

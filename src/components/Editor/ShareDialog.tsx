@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Copy, Link, Trash2, UserPlus, X } from "lucide-react"
+import { Copy, Link, Trash2, X } from "lucide-react"
 
 interface Collaborator {
   id: string
@@ -34,6 +34,8 @@ export function ShareDialog({ projectId, open, onOpenChange }: ShareDialogProps)
   const [addUsername, setAddUsername] = useState("")
   const [addRole, setAddRole] = useState("editor")
   const [loading, setLoading] = useState(false)
+  const [addLoading, setAddLoading] = useState(false)
+  const [addError, setAddError] = useState("")
 
   useEffect(() => {
     if (!open) return
@@ -42,13 +44,15 @@ export function ShareDialog({ projectId, open, onOpenChange }: ShareDialogProps)
       fetch(`/api/projects/${projectId}/collaborators`).then((r) => r.json()),
       fetch(`/api/projects/${projectId}/share`).then((r) => r.json()),
     ]).then(([collabs, shares]) => {
-      if (Array.isArray(collabs)) setCollaborators(collabs)
+      if (Array.isArray(collabs)) setCollaborators(collabs.map((c: any) => ({ ...c, username: c.users?.username ?? "" })))
       if (Array.isArray(shares)) setShareLinks(shares)
     }).finally(() => setLoading(false))
   }, [open, projectId])
 
   const addCollaborator = async () => {
-    if (!addUsername.trim()) return
+    if (!addUsername.trim() || addLoading) return
+    setAddLoading(true)
+    setAddError("")
     const res = await fetch(`/api/projects/${projectId}/collaborators`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -58,7 +62,12 @@ export function ShareDialog({ projectId, open, onOpenChange }: ShareDialogProps)
       const data = await res.json()
       setCollaborators((prev) => [...prev, { ...data, username: addUsername.trim() }])
       setAddUsername("")
+    } else {
+      const err = await res.json()
+      setAddError(err.error || "Failed to add collaborator")
+      setTimeout(() => setAddError(""), 2000)
     }
+    setAddLoading(false)
   }
 
   const removeCollaborator = async (collabId: string) => {
@@ -148,10 +157,11 @@ export function ShareDialog({ projectId, open, onOpenChange }: ShareDialogProps)
                 <SelectItem value="viewer">Viewer</SelectItem>
               </SelectContent>
             </Select>
-            <Button size="sm" className="h-8" onClick={addCollaborator}>
-              <UserPlus className="h-3 w-3" />
+            <Button size="sm" className="h-8" onClick={addCollaborator} disabled={addLoading}>
+              {addLoading ? "Adding..." : "Add"}
             </Button>
           </div>
+          {addError && <p className="text-xs text-destructive">{addError}</p>}
 
           <div className="border-t pt-4">
             <p className="mb-2 text-sm font-medium">Share links</p>

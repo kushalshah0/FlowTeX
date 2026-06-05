@@ -4,11 +4,11 @@ import { useEffect, useState, useCallback, useRef } from "react"
 import * as pdfjs from "pdfjs-dist"
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist"
 import { compileLatex } from "@/lib/compile"
+
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
 import { Button } from "@/components/ui/button"
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Download, Play, Terminal, Loader2, Eye } from "lucide-react"
 import type { ProjectFile } from "@/types"
-
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
 
 interface PdfPreviewProps {
   files: ProjectFile[]

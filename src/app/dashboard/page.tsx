@@ -99,7 +99,7 @@ export default function DashboardPage() {
     setDeleteId(null)
   }
 
-  const owned = projects.filter((p) => !p.owner_id || p.owner_id === userId)
+  const owned = projects.filter((p) => p.owner_id === userId)
   const shared = projects.filter((p) => p.owner_id && p.owner_id !== userId)
 
   return (

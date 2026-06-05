@@ -70,6 +70,9 @@ export function CodeEditor({ file, onUpdate, active = true }: CodeEditorProps) {
         }
       }
     })
+    provider.on("connection-error", (event: any) => {
+      console.error("PartyKit connection error:", event)
+    })
 
     const dispatchCompile = () => {
       const content = ytext.toString()
