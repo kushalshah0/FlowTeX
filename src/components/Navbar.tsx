@@ -1,9 +1,11 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LogOut, ChevronLeft, FileCode } from "lucide-react"
+import { getSessionUser } from "@/lib/session"
 
 interface NavbarProps {
   title?: string
@@ -13,7 +15,12 @@ interface NavbarProps {
 }
 
 export function Navbar({ title = "FlowTex", subtitle, showBack, backHref = "/dashboard" }: NavbarProps) {
+  const [name, setName] = useState("")
   const router = useRouter()
+
+  useEffect(() => {
+    setName(getSessionUser().name)
+  }, [])
 
   const handleSignOut = () => {
     document.cookie = "auth_token=; path=/; max-age=0"
@@ -36,7 +43,8 @@ export function Navbar({ title = "FlowTex", subtitle, showBack, backHref = "/das
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">{name}</span>
         <ThemeToggle />
         <Button variant="ghost" size="icon" onClick={handleSignOut}>
           <LogOut className="h-4 w-4" />
