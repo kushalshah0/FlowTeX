@@ -155,7 +155,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <Navbar title="User Management" subtitle="Manage FlowTex accounts" />
+      <Navbar />
 
       <div className="mx-auto max-w-4xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
