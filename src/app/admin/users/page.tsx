@@ -8,8 +8,8 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, LogOut, Shield, UserCog, Eye, EyeOff, FileCode, Pencil } from "lucide-react"
-import { ThemeToggle } from "@/components/ThemeToggle"
+import { Plus, Trash2, Shield, UserCog, Eye, EyeOff, Pencil } from "lucide-react"
+import { Navbar } from "@/components/Navbar"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
@@ -153,30 +153,9 @@ export default function AdminUsersPage() {
     fetchUsers()
   }
 
-  const handleSignOut = () => {
-    document.cookie = "auth_token=; path=/; max-age=0"
-    router.push("/login")
-  }
-
   return (
     <div className="min-h-screen bg-muted/20">
-      <header className="border-b bg-background px-6 py-4">
-        <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <div className="flex items-center gap-3">
-            <FileCode className="h-4 w-4 text-primary" />
-            <div>
-              <h1 className="text-sm font-semibold">User Management</h1>
-              <p className="text-xs text-muted-foreground">Manage FlowTex accounts</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={handleSignOut} title="Sign out">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar title="User Management" subtitle="Manage FlowTex accounts" />
 
       <div className="mx-auto max-w-4xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
