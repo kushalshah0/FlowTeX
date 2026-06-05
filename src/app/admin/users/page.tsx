@@ -21,21 +21,6 @@ interface User {
   created_at: string
 }
 
-const AVATAR_COLORS = [
-  "bg-red-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500",
-  "bg-purple-500", "bg-pink-500", "bg-cyan-500", "bg-orange-500",
-]
-
-function avatarColor(username: string): string {
-  let hash = 0
-  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash)
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
-}
-
-function initials(name: string): string {
-  return name.slice(0, 2).toUpperCase()
-}
-
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -306,7 +291,7 @@ export default function AdminUsersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/30 text-left text-xs font-medium text-muted-foreground">
-                  <th className="px-4 py-3 pl-5">User</th>
+                  <th className="px-4 py-3 pl-5">Username</th>
                   <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3 pr-5 text-right">Actions</th>
@@ -316,12 +301,7 @@ export default function AdminUsersPage() {
                 {users.map((u) => (
                   <tr key={u.id} className="border-b last:border-0 hover:bg-muted/10 transition-colors">
                     <td className="px-4 py-3 pl-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium text-white ${avatarColor(u.username)}`}>
-                          {initials(u.username)}
-                        </div>
-                        <span className="text-sm font-medium">{u.username}</span>
-                      </div>
+                      <span className="text-sm font-medium">{u.username}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
