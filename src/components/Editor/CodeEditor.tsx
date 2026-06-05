@@ -15,21 +15,30 @@ const PARTYKIT_HOST = process.env.NEXT_PUBLIC_PARTYKIT_HOST || "flowtex.kushalsh
 interface CodeEditorProps {
   file: ProjectFile
   onUpdate: (fileId: string, content: string) => void
+  active?: boolean
 }
 
-export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
+export function CodeEditor({ file, onUpdate, active = true }: CodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   const sessionId = useRef(`tab-${Math.random().toString(36).slice(2, 9)}`)
   const [onlineUsers, setOnlineUsers] = useState<Array<{ id: string; name: string; color: string }>>([])
 
   useEffect(() => {
-    if (!editorRef.current) return
+    if (!active || !editorRef.current) return
+
+    const getCookie = (name: string) => {
+      const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`))
+      return match ? decodeURIComponent(match[2]) : ""
+    }
+    const authToken = getCookie("auth_token")
 
     const sessionUser = getSessionUser()
     const ydoc = new Y.Doc()
     const ytext = ydoc.getText("content")
-    const provider = new YPartyKitProvider(PARTYKIT_HOST, `file-${file.id}`, ydoc)
+    const provider = new YPartyKitProvider(PARTYKIT_HOST, `file-${file.id}`, ydoc, {
+      params: { auth: authToken },
+    })
 
     const id = sessionId.current
     provider.awareness.setLocalState({
@@ -45,8 +54,8 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
       const users: Array<{ id: string; name: string; color: string }> = []
       for (const [clientID, s] of states) {
         if (clientID === local) continue
-        if (!s.name || !s.id || seen.has(s.id)) continue
-        seen.add(s.id)
+        if (!s.name || !s.id || seen.has(s.name)) continue
+        seen.add(s.name)
         users.push({ id: s.id, name: s.name, color: s.color })
       }
       setOnlineUsers(users)
@@ -121,7 +130,7 @@ export function CodeEditor({ file, onUpdate }: CodeEditorProps) {
       window.removeEventListener("request-compile", triggerCompile)
       window.removeEventListener("goto-line", goToLine)
     }
-  }, [file.id, file.file_name])
+  }, [file.id, file.file_name, active])
 
   return (
     <div className="flex h-full flex-col">
