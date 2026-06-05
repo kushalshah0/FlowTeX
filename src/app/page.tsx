@@ -160,7 +160,7 @@ export default async function Home() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="flex -space-x-1.5">
-                        <div className="relative z-10 h-5 w-5 rounded-full border-2 border-background bg-blue-500" title="lowcase" />
+                        <div className="relative z-10 h-5 w-5 rounded-full border-2 border-background bg-blue-500" title="lokesh" />
                         <div className="relative z-20 h-5 w-5 rounded-full border-2 border-background bg-emerald-500" title="imcceer" />
                         <div className="relative z-30 h-5 w-5 rounded-full border-2 border-background bg-amber-500" title="carol" />
                       </div>
@@ -183,7 +183,7 @@ export default async function Home() {
                         <span className="text-purple-600">\author</span><span className="text-muted-foreground">{`{Team}`}</span>
                         {/* Remote cursor */}
                         <span className="absolute top-0 inline-block h-4 w-[2px] bg-blue-500 animate-pulse" style={{ left: '6.5rem' }} />
-                        <span className="absolute -top-5 left-[5.5rem] whitespace-nowrap rounded-t rounded-br bg-blue-500/90 px-1.5 py-[2px] text-[9px] font-medium text-white">lowcase</span>
+                        <span className="absolute -top-5 left-[5.5rem] whitespace-nowrap rounded-t rounded-br bg-blue-500/90 px-1.5 py-[2px] text-[9px] font-medium text-white">lokesh</span>
                       </div>
                       <div>&nbsp;</div>
                       <div><span className="text-purple-600">\begin</span><span className="text-muted-foreground">{`{document}`}</span></div>
