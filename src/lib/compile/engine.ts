@@ -6,7 +6,8 @@ function filesToResources(files: ProjectFile[]): { name: string; content: string
 
 export async function compileLatex(
   files: ProjectFile[],
-  mainContent: string
+  mainContent: string,
+  projectId?: string
 ): Promise<{ pdf: ArrayBuffer | null; log: string }> {
   const res = await fetch("/api/compile", {
     method: "POST",
@@ -14,6 +15,7 @@ export async function compileLatex(
     body: JSON.stringify({
       content: mainContent,
       files: filesToResources(files),
+      project_id: projectId,
     }),
   })
 
