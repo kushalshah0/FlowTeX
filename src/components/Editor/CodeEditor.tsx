@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { EditorView, basicSetup } from "codemirror"
 import { EditorState } from "@codemirror/state"
 import { keymap } from "@codemirror/view"
@@ -23,6 +23,8 @@ export function CodeEditor({ file, onUpdate, active = true }: CodeEditorProps) {
   const viewRef = useRef<EditorView | null>(null)
   const sessionId = useRef(`tab-${Math.random().toString(36).slice(2, 9)}`)
   const [onlineUsers, setOnlineUsers] = useState<Array<{ id: string; name: string; color: string }>>([])
+  const awarenessRef = useRef<any>(null)
+  const ydocRef = useRef<Y.Doc | null>(null)
 
   useEffect(() => {
     if (!active || !editorRef.current) return
@@ -35,16 +37,22 @@ export function CodeEditor({ file, onUpdate, active = true }: CodeEditorProps) {
 
     const sessionUser = getSessionUser()
     const ydoc = new Y.Doc()
+    ydocRef.current = ydoc
     const ytext = ydoc.getText("content")
     const provider = new YPartyKitProvider(PARTYKIT_HOST, `file-${file.id}`, ydoc, {
       params: { auth: authToken },
     })
+    awarenessRef.current = provider.awareness
 
     const id = sessionId.current
     provider.awareness.setLocalState({
       name: sessionUser.name,
       color: sessionUser.color,
       id,
+      user: {
+        name: sessionUser.name,
+        color: sessionUser.color,
+      },
     })
 
     const onAwarenessChange = () => {
@@ -126,6 +134,8 @@ export function CodeEditor({ file, onUpdate, active = true }: CodeEditorProps) {
     return () => {
       view.destroy()
       viewRef.current = null
+      awarenessRef.current = null
+      ydocRef.current = null
       provider.awareness.setLocalState(null)
       provider.awareness.off("change", onAwarenessChange)
       provider.destroy()
@@ -134,6 +144,26 @@ export function CodeEditor({ file, onUpdate, active = true }: CodeEditorProps) {
       window.removeEventListener("goto-line", goToLine)
     }
   }, [file.id, file.file_name, active])
+
+  const goToUserCursor = useCallback((targetName: string) => {
+    const v = viewRef.current
+    const awareness = awarenessRef.current
+    const ydoc = ydocRef.current
+    if (!v || !awareness || !ydoc) return
+
+    const states = Array.from(awareness.getStates() as Map<number, any>)
+    for (const [, state] of states) {
+      if (state.name !== targetName || !state.cursor?.head) continue
+      const abs = Y.createAbsolutePositionFromRelativePosition(state.cursor.head, ydoc)
+      if (!abs) continue
+      v.dispatch({
+        selection: { anchor: abs.index },
+        scrollIntoView: true,
+      })
+      v.focus()
+      return
+    }
+  }, [])
 
   return (
     <div className="flex h-full flex-col">
@@ -144,8 +174,10 @@ export function CodeEditor({ file, onUpdate, active = true }: CodeEditorProps) {
             {onlineUsers.map((u, i) => (
               <span
                 key={i}
-                className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] leading-none"
+                className="flex cursor-pointer items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] leading-none"
                 style={{ backgroundColor: u.color + "20", color: u.color }}
+                onClick={() => goToUserCursor(u.name)}
+                title={`Go to ${u.name}'s cursor`}
               >
                 <span
                   className="h-1.5 w-1.5 rounded-full"
@@ -158,6 +190,10 @@ export function CodeEditor({ file, onUpdate, active = true }: CodeEditorProps) {
         )}
       </div>
       <div ref={editorRef} className="flex-1 overflow-auto" />
+      <style>{`
+        .cm-ySelectionInfo { opacity: 1 !important; }
+        .cm-ySelectionCaret:hover > .cm-ySelectionInfo { opacity: 1 !important; }
+      `}</style>
     </div>
   )
 }
