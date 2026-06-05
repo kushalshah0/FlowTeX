@@ -8,6 +8,7 @@ import { CodeEditor } from "@/components/Editor/CodeEditor"
 import { PdfPreview } from "@/components/Editor/PdfPreview"
 import { Button } from "@/components/ui/button"
 import { Menu, FileCode, Eye } from "lucide-react"
+import { Navbar } from "@/components/Navbar"
 import type { ProjectFile } from "@/types"
 
 const DEFAULT_TEX = `\\documentclass{article}
@@ -148,93 +149,94 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-y-0 left-0 z-10 w-64 bg-background border-r shadow-xl">
+    <div className="flex h-screen flex-col">
+      <Navbar showBack />
+      <div className="relative flex-1 min-h-0">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            <div className="absolute inset-y-0 left-0 z-10 w-64 bg-background border-r shadow-xl">
+              <FileSidebar
+                files={files}
+                activeFile={activeFile}
+                onSelect={(f) => { setActiveFile(f); setSidebarOpen(false) }}
+                onAddFile={(name) => { handleAddFile(name); setSidebarOpen(false) }}
+                onRenameFile={handleRenameFile}
+                onDeleteFile={handleDeleteFile}
+                onClose={() => setSidebarOpen(false)}
+              />
+            </div>
+            <div className="absolute inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
+          </div>
+        )}
+
+        {/* Desktop layout */}
+        <div className="hidden h-full md:flex">
+          <div className="w-64 shrink-0 border-r">
             <FileSidebar
               files={files}
               activeFile={activeFile}
-              onSelect={(f) => { setActiveFile(f); setSidebarOpen(false) }}
-              onAddFile={(name) => { handleAddFile(name); setSidebarOpen(false) }}
+              onSelect={setActiveFile}
+              onAddFile={handleAddFile}
               onRenameFile={handleRenameFile}
               onDeleteFile={handleDeleteFile}
-              onBack={() => { setSidebarOpen(false); router.push("/dashboard") }}
-              onClose={() => setSidebarOpen(false)}
             />
           </div>
-          <div className="absolute inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
+          <PanelGroup orientation="horizontal">
+            <Panel defaultSize={55} minSize={30}>
+              <CodeEditor
+                key={activeFile.id}
+                file={activeFile}
+                onUpdate={handleFileUpdate}
+              />
+            </Panel>
+            <Separator className="group flex w-[5px] cursor-col-resize items-center justify-center bg-transparent hover:bg-muted/50 active:bg-muted transition-colors">
+              <div className="h-8 w-[2px] rounded-full bg-border group-hover:bg-ring transition-colors" />
+            </Separator>
+            <Panel defaultSize={45} minSize={20}>
+              <PdfPreview files={files} />
+            </Panel>
+          </PanelGroup>
         </div>
-      )}
 
-      {/* Desktop layout */}
-      <div className="hidden h-full md:flex">
-        <div className="w-64 shrink-0 border-r">
-          <FileSidebar
-            files={files}
-            activeFile={activeFile}
-            onSelect={setActiveFile}
-            onAddFile={handleAddFile}
-            onRenameFile={handleRenameFile}
-            onDeleteFile={handleDeleteFile}
-            onBack={() => router.push("/dashboard")}
-          />
-        </div>
-        <PanelGroup orientation="horizontal">
-          <Panel defaultSize={55} minSize={30}>
-            <CodeEditor
-              key={activeFile.id}
-              file={activeFile}
-              onUpdate={handleFileUpdate}
-            />
-          </Panel>
-          <Separator className="group flex w-[5px] cursor-col-resize items-center justify-center bg-transparent hover:bg-muted/50 active:bg-muted transition-colors">
-            <div className="h-8 w-[2px] rounded-full bg-border group-hover:bg-ring transition-colors" />
-          </Separator>
-          <Panel defaultSize={45} minSize={20}>
-            <PdfPreview files={files} />
-          </Panel>
-        </PanelGroup>
-      </div>
-
-      {/* Mobile layout */}
-      <div className="flex h-full flex-col md:hidden">
-        <div className="flex items-center border-b px-2 py-1.5 shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-4 w-4" />
-          </Button>
-          <span className="ml-2 text-sm font-medium truncate">{activeFile.file_name}</span>
-          <div className="ml-auto flex items-center gap-0.5">
-            <Button
-              variant={viewMode === "editor" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("editor")}
-              className="h-7 w-7 p-0"
-            >
-              <FileCode className="h-3.5 w-3.5" />
+        {/* Mobile layout */}
+        <div className="flex h-full flex-col md:hidden">
+          <div className="flex items-center border-b px-2 py-1.5 shrink-0">
+            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+              <Menu className="h-4 w-4" />
             </Button>
-            <Button
-              variant={viewMode === "preview" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("preview")}
-              className="h-7 w-7 p-0"
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </Button>
+            <span className="ml-2 text-sm font-medium truncate">{activeFile.file_name}</span>
+            <div className="ml-auto flex items-center gap-0.5">
+              <Button
+                variant={viewMode === "editor" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("editor")}
+                className="h-7 w-7 p-0"
+              >
+                <FileCode className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === "preview" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("preview")}
+                className="h-7 w-7 p-0"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 min-h-0">
-          {viewMode === "editor" ? (
-            <CodeEditor
-              key={activeFile.id}
-              file={activeFile}
-              onUpdate={handleFileUpdate}
-            />
-          ) : (
-            <PdfPreview files={files} />
-          )}
+          <div className="flex-1 min-h-0">
+            {viewMode === "editor" ? (
+              <CodeEditor
+                key={activeFile.id}
+                file={activeFile}
+                onUpdate={handleFileUpdate}
+              />
+            ) : (
+              <PdfPreview files={files} />
+            )}
+          </div>
         </div>
       </div>
     </div>
