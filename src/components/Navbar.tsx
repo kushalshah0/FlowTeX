@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { LogOut, ChevronLeft, Users, FileCode } from "lucide-react"
+import { LogOut, ChevronLeft, FileCode } from "lucide-react"
 
 interface NavbarProps {
   title?: string
@@ -14,15 +14,6 @@ interface NavbarProps {
 
 export function Navbar({ title = "FlowTex", subtitle, showBack, backHref = "/dashboard" }: NavbarProps) {
   const router = useRouter()
-
-  const isAdmin = (() => {
-    try {
-      const m = document.cookie.match(/(?:^|;\s*)auth_token=([^;]*)/)
-      if (!m) return false
-      const raw = atob(m[1].replace(/-/g, "+").replace(/_/g, "/"))
-      return JSON.parse(raw).r === "admin"
-    } catch { return false }
-  })()
 
   const handleSignOut = () => {
     document.cookie = "auth_token=; path=/; max-age=0"
@@ -52,12 +43,6 @@ export function Navbar({ title = "FlowTex", subtitle, showBack, backHref = "/das
         )}
       </div>
       <div className="flex items-center gap-1">
-        {isAdmin && (
-          <Button variant="ghost" size="sm" onClick={() => router.push("/admin/users")}>
-            <Users className="mr-1.5 h-4 w-4" />
-            Users
-          </Button>
-        )}
         <ThemeToggle />
         <Button variant="ghost" size="icon" onClick={handleSignOut}>
           <LogOut className="h-4 w-4" />
