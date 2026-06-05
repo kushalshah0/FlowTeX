@@ -58,9 +58,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen">
       <Navbar />
-
+      <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Projects</h2>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -132,6 +132,7 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }
