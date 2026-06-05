@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Plus, FileCode, X, Pencil, Trash2, Check, Copy } from "lucide-react"
+import { Plus, FileCode, X, Pencil, Trash2, Check } from "lucide-react"
 import type { ProjectFile } from "@/types"
 
 interface FileSidebarProps {
@@ -13,11 +13,10 @@ interface FileSidebarProps {
   onAddFile: (name: string) => void
   onRenameFile?: (fileId: string, newName: string) => void
   onDeleteFile?: (fileId: string) => void
-  onBack: () => void
   onClose?: () => void
 }
 
-export function FileSidebar({ files, activeFile, onSelect, onAddFile, onRenameFile, onDeleteFile, onBack, onClose }: FileSidebarProps) {
+export function FileSidebar({ files, activeFile, onSelect, onAddFile, onRenameFile, onDeleteFile, onClose }: FileSidebarProps) {
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState("")
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -51,10 +50,7 @@ export function FileSidebar({ files, activeFile, onSelect, onAddFile, onRenameFi
 
   return (
     <div className="flex h-full flex-col bg-muted/30">
-      <div className="flex items-center gap-2 border-b px-3 py-2">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+      <div className="flex items-center border-b px-3 py-2">
         <span className="text-sm font-medium">Files</span>
         {onClose && (
           <Button variant="ghost" size="icon" className="ml-auto" onClick={onClose}>
@@ -65,7 +61,6 @@ export function FileSidebar({ files, activeFile, onSelect, onAddFile, onRenameFi
       <div className="flex-1 overflow-y-auto p-2">
         {texFiles.length > 0 && (
           <div className="mb-3">
-            <p className="mb-1 px-2 text-xs font-medium text-muted-foreground">TeX Files</p>
             {texFiles.map((file) => (
               <FileRow
                 key={file.id}
