@@ -5,10 +5,12 @@ import { useParams, useRouter } from "next/navigation"
 import { Panel, Group as PanelGroup, Separator } from "react-resizable-panels"
 import { FileSidebar } from "@/components/Editor/FileSidebar"
 import { CodeEditor } from "@/components/Editor/CodeEditor"
+import { AssetPreview } from "@/components/Editor/AssetPreview"
 import { PdfPreview } from "@/components/Editor/PdfPreview"
 import { Button } from "@/components/ui/button"
-import { Menu, FileCode, Eye } from "lucide-react"
+import { Menu, FileCode, Eye, Share2 } from "lucide-react"
 import { Navbar } from "@/components/Navbar"
+import { ShareDialog } from "@/components/Editor/ShareDialog"
 import type { ProjectFile } from "@/types"
 
 const DEFAULT_TEX = `\\documentclass{article}
@@ -38,6 +40,8 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>("editor")
+  const [isDesktop, setIsDesktop] = useState(true)
+  const [shareOpen, setShareOpen] = useState(false)
   const saveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const latestContent = useRef<Map<string, string>>(new Map())
 
@@ -123,6 +127,10 @@ export default function EditorPage() {
     saveTimers.current.set(fileId, timer)
   }, [id])
 
+  const handleUpload = useCallback((file: ProjectFile) => {
+    setFiles((prev) => [...prev, file])
+  }, [])
+
   useEffect(() => {
     return () => {
       for (const timer of saveTimers.current.values()) {
@@ -130,6 +138,14 @@ export default function EditorPage() {
       }
       saveTimers.current.clear()
     }
+  }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)")
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
   }, [])
 
   if (loading) {
@@ -150,7 +166,13 @@ export default function EditorPage() {
 
   return (
     <div className="flex h-screen flex-col">
-      <Navbar showBack />
+      <Navbar showBack>
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setShareOpen(true)}>
+          <Share2 className="h-3.5 w-3.5" />
+          Share
+        </Button>
+      </Navbar>
+      <ShareDialog projectId={id} open={shareOpen} onOpenChange={setShareOpen} />
       <div className="relative flex-1 min-h-0">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
@@ -164,6 +186,8 @@ export default function EditorPage() {
                 onRenameFile={handleRenameFile}
                 onDeleteFile={handleDeleteFile}
                 onClose={() => setSidebarOpen(false)}
+                projectId={id}
+                onUpload={handleUpload}
               />
             </div>
             <div className="absolute inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
@@ -180,21 +204,28 @@ export default function EditorPage() {
               onAddFile={handleAddFile}
               onRenameFile={handleRenameFile}
               onDeleteFile={handleDeleteFile}
+              projectId={id}
+              onUpload={handleUpload}
             />
           </div>
           <PanelGroup orientation="horizontal">
             <Panel defaultSize={55} minSize={30}>
-              <CodeEditor
-                key={activeFile.id}
-                file={activeFile}
-                onUpdate={handleFileUpdate}
-              />
+              {activeFile.type === "asset" ? (
+                <AssetPreview key={activeFile.id} file={activeFile} />
+              ) : (
+                <CodeEditor
+                  key={activeFile.id}
+                  file={activeFile}
+                  onUpdate={handleFileUpdate}
+                  active={isDesktop}
+                />
+              )}
             </Panel>
             <Separator className="group flex w-[5px] cursor-col-resize items-center justify-center bg-transparent hover:bg-muted/50 active:bg-muted transition-colors">
               <div className="h-8 w-[2px] rounded-full bg-border group-hover:bg-ring transition-colors" />
             </Separator>
             <Panel defaultSize={45} minSize={20}>
-              <PdfPreview files={files} />
+              <PdfPreview files={files} projectId={id} />
             </Panel>
           </PanelGroup>
         </div>
@@ -227,14 +258,17 @@ export default function EditorPage() {
           </div>
 
           <div className="flex-1 min-h-0">
-            {viewMode === "editor" ? (
+            {viewMode === "editor" && activeFile.type === "asset" ? (
+              <AssetPreview key={activeFile.id} file={activeFile} />
+            ) : viewMode === "editor" ? (
               <CodeEditor
                 key={activeFile.id}
                 file={activeFile}
                 onUpdate={handleFileUpdate}
+                active={!isDesktop && viewMode === "editor"}
               />
             ) : (
-              <PdfPreview files={files} />
+              <PdfPreview files={files} projectId={id} />
             )}
           </div>
         </div>
