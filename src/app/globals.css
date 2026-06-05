@@ -2,24 +2,24 @@
 
 :root {
   --bg: hsl(0 0% 100%);
-  --fg: hsl(240 10% 3.9%);
+  --fg: hsl(240 10% 2%);
   --card: hsl(0 0% 100%);
-  --card-fg: hsl(240 10% 3.9%);
+  --card-fg: hsl(240 10% 2%);
   --popover: hsl(0 0% 100%);
-  --popover-fg: hsl(240 10% 3.9%);
-  --primary: hsl(240 5.9% 10%);
-  --primary-fg: hsl(0 0% 98%);
-  --secondary: hsl(240 4.8% 95.9%);
-  --secondary-fg: hsl(240 5.9% 10%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-fg: hsl(240 3.8% 46.1%);
-  --accent: hsl(240 4.8% 95.9%);
-  --accent-fg: hsl(240 5.9% 10%);
+  --popover-fg: hsl(240 10% 2%);
+  --primary: hsl(240 5.9% 8%);
+  --primary-fg: hsl(0 0% 100%);
+  --secondary: hsl(240 4% 93%);
+  --secondary-fg: hsl(240 6% 10%);
+  --muted: hsl(240 4% 93%);
+  --muted-fg: hsl(240 5% 35%);
+  --accent: hsl(240 4% 93%);
+  --accent-fg: hsl(240 6% 10%);
   --destructive: hsl(0 84.2% 60.2%);
-  --destructive-fg: hsl(0 0% 98%);
-  --border: hsl(240 5.9% 90%);
-  --input: hsl(240 5.9% 90%);
-  --ring: hsl(240 5.9% 10%);
+  --destructive-fg: hsl(0 0% 100%);
+  --border: hsl(240 5% 86%);
+  --input: hsl(240 5% 86%);
+  --ring: hsl(240 5% 30%);
 }
 
 .dark {
