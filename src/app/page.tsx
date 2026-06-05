@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { decodeSession } from "@/lib/auth"
 import Link from "next/link"
@@ -80,13 +79,7 @@ const features: Feature[] = [
 export default async function Home() {
   const cookieStore = await cookies()
   const auth = cookieStore.get("auth_token")
-
-  if (auth) {
-    const session = decodeSession(auth.value)
-    if (session) {
-      redirect(session.r === "admin" ? "/admin/users" : "/dashboard")
-    }
-  }
+  const session = auth ? decodeSession(auth.value) : null
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -102,12 +95,24 @@ export default async function Home() {
           </nav>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link
-              href="/login"
-              className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-4 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-            >
-              Sign in
-            </Link>
+            {session ? (
+              <div className="flex items-center gap-4">
+                <span className="text-xs text-muted-foreground">{session.u}</span>
+                <Link
+                  href={session.r === "admin" ? "/admin/users" : "/dashboard"}
+                  className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                >
+                  Dashboard
+                </Link>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-4 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+              >
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
       </header>
