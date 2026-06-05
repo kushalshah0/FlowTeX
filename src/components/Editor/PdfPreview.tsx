@@ -12,6 +12,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
 
 interface PdfPreviewProps {
   files: ProjectFile[]
+  projectId?: string
 }
 
 interface TextItem {
@@ -22,7 +23,7 @@ interface TextItem {
   height: number
 }
 
-export function PdfPreview({ files }: PdfPreviewProps) {
+export function PdfPreview({ files, projectId }: PdfPreviewProps) {
   const [logs, setLogs] = useState<string[]>([])
   const [compiling, setCompiling] = useState(false)
   const [numPages, setNumPages] = useState(0)
@@ -139,7 +140,7 @@ export function PdfPreview({ files }: PdfPreviewProps) {
     if (containerRef.current) containerRef.current.innerHTML = ""
 
     try {
-      const result = await compileLatex(files, content)
+      const result = await compileLatex(files, content, projectId)
 
       if (result.pdf) {
         await loadPdf(result.pdf)

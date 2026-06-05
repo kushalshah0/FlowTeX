@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
@@ -12,9 +12,10 @@ interface NavbarProps {
   subtitle?: string
   showBack?: boolean
   backHref?: string
+  children?: ReactNode
 }
 
-export function Navbar({ title = "FlowTex", subtitle, showBack, backHref = "/dashboard" }: NavbarProps) {
+export function Navbar({ title = "FlowTex", subtitle, showBack, backHref = "/dashboard", children }: NavbarProps) {
   const [name, setName] = useState("")
   const router = useRouter()
 
@@ -44,6 +45,7 @@ export function Navbar({ title = "FlowTex", subtitle, showBack, backHref = "/das
         </div>
       </div>
       <div className="flex items-center gap-2">
+        {children}
         <span className="text-sm text-muted-foreground">{name}</span>
         <ThemeToggle />
         <Button variant="ghost" size="icon" onClick={handleSignOut}>
